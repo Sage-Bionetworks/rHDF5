@@ -7,7 +7,6 @@
 #if defined(WIN32) || defined(WIN64)
 #include <io.h>
 #else
-#include <sys/io.h>
 #endif
 
 #include "StringUtils.h"
