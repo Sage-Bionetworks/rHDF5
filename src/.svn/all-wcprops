@@ -1,0 +1,365 @@
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src
+END
+HDF5OutputConverter.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/HDF5OutputConverter.cpp
+END
+HDF5Group.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/HDF5Group.cpp
+END
+RDllDefs.h
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/RDllDefs.h
+END
+HDF5Exception.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/HDF5Exception.cpp
+END
+RDataFrame.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/RDataFrame.cpp
+END
+RCreateVector.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/RCreateVector.cpp
+END
+Matrix.h
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/Matrix.h
+END
+HDF5Attribute.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/HDF5Attribute.cpp
+END
+RInitializer.h
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/RInitializer.h
+END
+HDF5_entry.h
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/HDF5_entry.h
+END
+HDF5Object.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/HDF5Object.cpp
+END
+RInsertMatrix.h
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/RInsertMatrix.h
+END
+RTObject.h
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/RTObject.h
+END
+HDF5DataType.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/HDF5DataType.cpp
+END
+RException.h
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/RException.h
+END
+RObjectFactory.h
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/RObjectFactory.h
+END
+RCopyMatrix.h
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/RCopyMatrix.h
+END
+RProblem.h
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/RProblem.h
+END
+RObject.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/RObject.cpp
+END
+RString.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/RString.cpp
+END
+RNumeric.h
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/RNumeric.h
+END
+RVector.h
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/RVector.h
+END
+RExtractData.h
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/RExtractData.h
+END
+StringUtils.h
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/StringUtils.h
+END
+bat_entry.h
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/bat_entry.h
+END
+UtilitiesException.h
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/UtilitiesException.h
+END
+HDF5DA.h
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/HDF5DA.h
+END
+HDF5Dataset.h
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/HDF5Dataset.h
+END
+HDF5CompoundType.h
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/HDF5CompoundType.h
+END
+RList.h
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/RList.h
+END
+HDF5OutputConverter.h
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/HDF5OutputConverter.h
+END
+RDev.h
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/RDev.h
+END
+RInitializer.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/RInitializer.cpp
+END
+bat.so
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/bat.so
+END
+HDF5_entry.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/HDF5_entry.cpp
+END
+HDF5Group.h
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/HDF5Group.h
+END
+Int64.h
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/Int64.h
+END
+HDF5Exception.h
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/HDF5Exception.h
+END
+RDataFrame.h
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/RDataFrame.h
+END
+RInsertMatrix.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/RInsertMatrix.cpp
+END
+RCreateVector.h
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/RCreateVector.h
+END
+HDF5Attribute.h
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/HDF5Attribute.h
+END
+RObjectFactory.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/RObjectFactory.cpp
+END
+HDF5Object.h
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/HDF5Object.h
+END
+RProblem.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/RProblem.cpp
+END
+RVector.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/RVector.cpp
+END
+RExtractData.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/RExtractData.cpp
+END
+HDF5DataType.h
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/HDF5DataType.h
+END
+StringUtils.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/StringUtils.cpp
+END
+bat_entry.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/bat_entry.cpp
+END
+RCopyString.h
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/RCopyString.h
+END
+Makevars
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/Makevars
+END
+HDF5DA.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/HDF5DA.cpp
+END
+HDF5Main.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/HDF5Main.cpp
+END
+HDF5Dataset.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/HDF5Dataset.cpp
+END
+STLTypes.h
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/STLTypes.h
+END
+HDF5CompoundType.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/HDF5CompoundType.cpp
+END
+RList.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/RList.cpp
+END
+RObject.h
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/RObject.h
+END
+RString.h
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/src/RString.h
+END

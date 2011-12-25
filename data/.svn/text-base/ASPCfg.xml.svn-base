@@ -1,0 +1,499 @@
+<!-- This is the cfg file for the client apps like those in Matlab.      -->
+<!-- It is intended to be used for all non-developer deployments and,    -->
+<!-- by default, connect to the BackendMgr running on:                   -->
+<!--        usseap0008   port: 7000                                  -->
+<!-- But it is possible for any service to use an alternate host and     -->
+<!-- port.  The following services use alternate host and ports:         -->
+<!--        Annotator2:     usseap0008  port: 6000                       -->
+
+<analytical_services>
+   <RootService>
+      <DefaultSystem>
+         <NameServiceHost value="se-admin.merck.com" /> <!-- Only if using nameservice (not default)  -->
+         <NameServicePort value="9999" />       <!-- Only if using nameservice -->
+         <ServiceHost value="usseap1620" />     <!-- Do not change; change at the service level  -->
+         <ServicePort value="7000" />
+         <ServicesNames value="ClusterService PatternServices RoastService CorrelateSvcService ResolverData TGIGeneSetsService" />
+         <Locate value="corbaloc" />            <!-- NameService,corbaloc -->
+         <TaskPath value="./" />                <!-- path of Task dlls  -->
+         <TaskBaseName value="Task" />          <!-- base name of Task dlls -->
+         <ClientProtocol value="Remote" />       <!-- Remote,Local -->
+      </DefaultSystem>
+   </RootService>
+
+  <ClusterService>
+      <DefaultSystem>
+         <ServiceObjectID value="ClusterService" />
+         <ServicePort value="7400" />           <!-- Do not change; change at the service level  -->
+         <Operation value="Cluster" />  
+         <NumberRowClusters value="1" />
+         <NumberColumnClusters value="1" />
+         <ErrorWeightingRows value="False" />
+         <ErrorWeightingColumns value="False" />
+         <RowMetric value="Pearson" />      <!-- Pearson,Cosine,Manhattan,Maximum,Euclidean,AbsPearson,AbsCosine,RankOrder -->
+         <ColumnMetric value="Pearson" />   <!-- Pearson,Cosine,Manhattan,Maximum,Euclidean,AbsPearson,AbsCosine,RankOrder -->
+         <TaskNames value="Kmeans Kmedians Som Divisive" />
+         <SelectedTask value="Kmeans" />
+         <TaskBaseName value="Bridge" />        <!-- base name of Task dlls -->
+      </DefaultSystem>
+      <KmeansTask>
+         <Debug1 value="True" />
+         <NumberRowClusters value="5" />
+         <NumberColumnClusters value="5" />
+         <SortMethodRowClusters value="UpRegulated" />    <!-- UpRegulated,DownRegulated -->
+         <SortMethodColumnClusters value="UpRegulated" /> <!-- UpRegulated,DownRegulated -->
+      </KmeansTask>
+      <KmediansTask>
+         <NumberRowClusters value="5" />
+         <NumberColumnClusters value="5" />
+         <SortMethodRowClusters value="UpRegulated" />    <!-- UpRegulated,DownRegulated -->
+         <SortMethodColumnClusters value="UpRegulated" /> <!-- UpRegulated,DownRegulated -->
+      </KmediansTask>
+      <DivisiveTask>
+      </DivisiveTask>
+      <SomTask>
+         <NumberRowClusters value="5" />
+         <NumberColumnClusters value="5" />
+         <NumberRowXNodes value="1" />
+         <NumberRowYNodes value="5" />
+         <NumberColumnXNodes value="1" />
+         <NumberColumnYNodes value="5" />
+      </SomTask>
+   </ClusterService>
+
+   <RoastPlusService>
+      <DefaultSystem>
+         <ServiceObjectID value="RoastPlusService" />
+         <ServicePort value="7700" />           <!-- Do not change; change at the service level  -->
+         <ServicePort2 value="7777" />          <!-- Do not change; change at the service level  -->
+         <TaskNames value="Cluster" />
+         <TaskDebug value="True" />             <!-- True or False -->
+         <Metric value="Pearson" />             <!-- Pearson,Cosine,Manhattan,Maximum,Euclidean,AbsPearson,AbsCosine,RankOrder -->
+         <PvalueFilter value="Query" />         <!-- Query,Target,Either,Both-->
+         <PvalueMax value=".1" />               <!-- Between 0.0 and 1.0 -->
+         <RoastDim value="Rows" />              <!-- Rows or Columns -->
+         <SortReturn value="Similarity" />      <!-- Similarity,Pvalue,None -->
+         <ReturnHigh value="50" />              <!-- Number highs to return (if sorting) -->
+         <ReturnLow value="0" />               <!-- Number lows to return (if sorting) -->
+         <ReturnOnly value="0" />              <!-- Number to return (if not sorting) -->
+      </DefaultSystem>
+      <RoastTask>
+      </RoastTask>
+   </RoastPlusService>
+
+   <AgglomerativeService>
+      <DefaultSystem>
+         <ServiceObjectID value="AgglomerativeService" />
+         <ServicePort value="7500" />           <!-- Do not change; change at the service level  -->
+         <ServicePort2 value="7555" />          <!-- Do not change; change at the service level  -->
+         <TaskNames value="Cluster" />
+         <RowMetric value="Cosine" />           <!-- Pearson,Cosine,Manhattan,Maximum,Euclidean,AbsPearson,AbsCosine,RankOrder -->
+         <ColumnMetric value="Cosine" />        <!-- Pearson,Cosine,Manhattan,Maximum,Euclidean,AbsPearson,AbsCosine,RankOrder -->
+         <LinkRowClusters value="Average" />    <!-- Single,Complete,Average,Wards,Median -->
+         <LinkColumnClusters value="Average" /> <!-- Single,Complete,Average,Wards,Median -->
+         <FullDM value="True" />                <!-- True or False -->
+      </DefaultSystem>
+      <ClusterTask>
+      </ClusterTask>
+   </AgglomerativeService>
+
+   <CorrelateSvcService>
+      <DefaultSystem>
+         <ServiceObjectID value="CorrelateSvcService" />
+         <ServicePort value="7200" />           <!-- Do not change; change at the service level  -->
+         <Debug value="False" />                <!-- True/False -->
+         <metric value="Pearson" />             <!-- Pearson,Cosine,Manhattan,Maximum,Euclidean -->
+         <procdim value="col" />                <!-- Row/Col -->
+		 <pvalmethod value ="ttest" />			<!-- ttest/zscore -->
+         <user value="" />                      <!-- user name when saving -->
+         <jobfile value="" />                   <!-- job file when saving -->
+         <cmdfilepath value="" />               <!-- cmd file path when saving -->
+         <genfilepath value="" />               <!-- gen file path when saving -->
+         <savetext value="false" />              <!-- saving file -->
+         <dbserver value="" />                  <!-- db server when saving -->
+      </DefaultSystem>
+   </CorrelateSvcService>
+
+   <PPLCorrelateService>
+      <DefaultSystem>
+         <ServiceObjectID value="PPLCorrelateService" />
+         <ServicePort value="7300" />           <!-- Do not change; change at the service level  -->
+         <ClientProtocol value="Remote" />      <!-- Remote,Local -->
+         <Debug value="False" />                <!-- True/False -->
+         <metric value="Pearson" />             <!-- Pearson,Cosine,Manhattan,Maximum,Euclidean -->
+         <user value="" />                      <!-- user name when saving dm -->
+         <jobfile value="" />                   <!-- job file when saving dm -->
+         <cmdfilepath value="" />               <!-- cmd file path when saving dm -->
+         <genfilepath value="" />               <!-- gen file path when saving dm -->
+         <dbserver value="" />                  <!-- db server when saving dm -->
+      </DefaultSystem>
+   </PPLCorrelateService>
+
+   <DMplusService>
+      <DefaultSystem>
+         <ServiceObjectID value="DMplusService" />
+         <ServicePort value="7600" />           <!-- Do not change; change at the service level  -->
+         <ServicePort2 value="7666" />          <!-- Do not change; change at the service level  -->
+         <Debug value="False" />                <!-- True/False -->
+         <metric value="Pearson" />             <!-- Pearson,Cosine,Manhattan,Maximum,Euclidean -->
+         <user value="" />                      <!-- user name when saving dm -->
+         <jobfile value="" />                   <!-- job file when saving dm -->
+         <cmdfilepath value="" />               <!-- cmd file path when saving dm -->
+         <genfilepath value="" />               <!-- gen file path when saving dm -->
+         <dbserver value="" />                  <!-- db server when saving dm -->
+      </DefaultSystem>
+   </DMplusService>
+
+   <FuzzyCMService>
+      <DefaultSystem>
+         <ServiceObjectID value="FuzzyCMService" />
+          <ServicePort value="7800" />         
+          <Debug value="False" />              <!-- Debug task (True or False) -->
+         <TaskNames value="FuzzyCM" />
+         <SelectedTask value="FuzzyCM" />
+         <Random value="false" />        
+      </DefaultSystem>
+   </FuzzyCMService>
+
+   <RoastService>
+      <DefaultSystem>
+         <ServiceObjectID value="RoastService" />
+         <EngineName value="Roast Engine" />
+         <PValueThreshold value="0.1" />        <!-- float -->
+         <MetricType value="rosetta" />         <!-- "rosetta/pearson/euclidean/manhattan/maximum" -->
+         <ProcessAxis value="experiment" />     <!-- "experiment/feature" -->
+         <QueryId value="1" /> <!-- int -->
+         <PValueOperator value="noop" />        <!-- "noop/union/intersection/target/query" -->
+         <MaxPositivePointCount value="0" />    <!-- int -->
+         <MaxNegativePointCount value="50" />   <!-- int -->
+         <DataSourceType value="ratio" />       <!-- "ratio/intensity" -->
+       </DefaultSystem>
+   </RoastService>
+
+<!-- The following services are client-sideonly        -->
+<!-- and there are not BackendMgrs running.            -->
+
+   <FilterService>
+      <DefaultSystem>
+         <ServiceObjectID value="FilterService" />
+         <PvalueThreshold value="-1.0" />       <!-- enabled >= 0.0 -->
+         <FoldChangeThreshold value="-1.0" />   <!-- enabled >= 0.0 -->
+         <CoefVarThreshold value="-1.0" />      <!-- enabled >= 0.0 -->
+         <MinimumRows value="0" />              <!-- enabled > 0 -->
+         <MinimumColumns value="0" />           <!-- enabled > 0 -->
+         <ReturnIndices value="False" />        <!-- False returns data -->
+         <Debug value="False" />                <!-- True/False -->
+      </DefaultSystem>
+   </FilterService>
+
+   <ResolverDataService>
+      <DefaultSystem>
+         <EngineName value="ResolverData Engine" />
+         <TaskNames value="expression annotation egall metainfo resolverids opendb closedb login logout" />
+         <SelectedTask value="expression" />
+         <JavaJvmMin value="-Xms400M" />        <!-- JVM tuning -->
+         <JavaJvmMax value="-Xmx600M" />        <!-- JVM tuning -->
+         <!-- ====================================== -->
+         <!-- DB parameters - default if not passed  -->
+         <!-- ====================================== -->
+         <DbName value="MRLSP01" />             <!-- Resolver's db -->
+         <DbServer value="snwspr18.merck.com" />   <!-- Resolver's server -->
+         <!-- ====================================== -->
+         <!-- SDK parameters - should not be passed (for R)     -->
+         <!-- ====================================== -->
+         <SDKJar value="sdk.jar" />             <!-- name of resolver sdk jar -->
+         <SDKRootMatlab value="C:\MATLAB701\java\Rosetta-Matlab-jars" />                   <!-- name of folder containing sdk.jar;classes12.zip -->
+         <SDKRoot value="" />                  <!-- name of folder containing sdk.jar;classes12.zip -->
+         <OracleJar value="classes12.zip" />    <!-- name of jdb jar resolver uses -->
+         <JavaRoot value="C:\Program Files\Java\j2re1.4.2_08" />     <!-- java runtime root -->
+         <!-- ====================================== -->
+         <!-- Species (resolver independent)         -->
+         <!-- ====================================== -->
+         <speciesnames value="human yeast mouse rat dog ecoli chicken yeastgrm synthetic candida" />
+         <species value="human" />
+         <!-- ================================ -->
+         <!-- Type of data; level of detail    -->
+         <!-- ================================ -->
+         <typeofdatanames value="re rp ie ip" />
+         <levelofdetailnames value="feature reporter sequence unigene" />
+         <typeofdata value="re" />              <!-- From TypeOfDataNames -->
+         <levelofdetail value="sequence" />     <!-- From LevelOfDetailNames -->
+         <orderby value="pairid" />             <!-- pairid/none -->
+         <!-- ====================================== -->
+         <!-- Field Names (with EG fields specified) -->
+         <!-- ====================================== -->
+         <FieldNames value="value error pvalue seqcount background xdev logintensity intensity1 intensity2 failcode controlflag" /> 
+         <Fields value="logintensity value error pvalue xdev failcode controlflag" /> 
+         <!-- ====================================== -->
+         <!-- Column Annotation Field Names          -->
+         <!-- ====================================== -->
+		 <colannofields value="SOURCE_KEY_CODE SEQUENCE_NAME_LIST SEQUENCE_ID REPORTER_ALIAS RELIABLE CONSTITUENT_REPORTERS SEQUENCE_CLUSTER_CODE ACCESSION_CODE" /> 		
+         <!-- ========================================================== -->
+         <!-- Name Query/Predefined (examples)                           -->
+         <!-- Tasks may execute predefined queries (pdq's) aka named     -->
+         <!-- queries.  Named queries are typically used to get row      -->
+         <!-- ids.  They could be used to get info on columns.  There    -->
+         <!-- are two sets of cfg parameters - one for rows and one for  -->
+         <!-- columns. Each set has one attribute for identifying the    -->
+         <!-- pdq; the other attribute is used for the values of the pdq -->
+         <!-- For row queries, the cfg parameters are:                   -->
+         <!--    RowDataQuery - the name of the pdq                      -->
+         <!--    RowDataQueryValues - the value(s) for the pdq           -->
+         <!--                                                            -->
+         <!-- The name of the pdq is relatively straight forward; the    -->
+         <!-- query vaules is a bit more complicated.  Basically, a      -->
+         <!-- pdq takes one or more parameters (one parameter for each   -->
+         <!-- criteria in the pdq). Additionally, a pdq parameter can    -->
+         <!-- also contain multiple values when the "IN" operator is     -->
+         <!-- specified.                                                 -->
+         <!--                                                            -->
+         <!-- The complexity is how to specify pdq values in a single    -->
+         <!-- string.  To delimit the parameter for each criteria in     -->
+         <!-- the pdq, we use the cfg attribute named:                   -->
+         <!--       PDQDelimter                                          -->
+         <!-- and it's default value is '/'.  If the delimiter           -->
+         <!-- (default '/') is within a value, insert the value twice.   -->  
+         <!--                                                            -->
+         <!-- To delimit the use multiple values for the "IN" operator   -->
+         <!-- of a PDQ, use ';' (required delimiter for Resolver).       -->
+         <!--                                                            -->
+         <!-- Here are some examples:                                    -->
+         <!-- 1.  One parameter, single-value in pdq                     -->
+         <!--    <RowDataQuery value="ExperimentsByProject" />           -->
+         <!--    <RowDataQueryValues value="10148" />                    -->
+         <!-- 2.  One parameter, multi-value in pdq                      -->
+         <!--    <RowDataQuery value="ExperimentsByProjects" />          -->
+         <!--    <RowDataQueryValues value="10148;10149" />              -->
+         <!-- 3.  Two parameters, single-value in pdq                    -->
+         <!--    <RowDataQuery value="ExperimentsByProjectAndName" />    -->
+         <!--    <RowDataQueryValues value="10148/MyExperiments" />      -->
+         <!-- 3.  One parameters, single-value with "/" in value         -->
+         <!--    <RowDataQuery value="ExperimentsByProjecte" />          -->
+         <!--    <RowDataQueryValues value="10148//v1" />                -->
+         <!-- ========================================================== -->
+         <PDQDelimiter value="/" />             <!-- Default delimter    -->
+         <!-- ========================================================== -->
+         <!--   Warehouse related                                        -->
+         <!-- ========================================================== -->
+         <CollapseData value="True" />          <!-- True/False -->
+         <IncludeFlaggedData value="True" />    <!-- True/False -->
+         <IncludeCED value="True" />            <!-- True/False -->
+         <EnableStats value="False" />          <!-- True/False -->
+      </DefaultSystem>
+      <loginTask>
+         <DebugTask value="True" />             <!-- Debug task (True or False) -->
+      </loginTask>
+      <expressionTask>
+      </expressionTask>
+      <annotationTask>
+      </annotationTask>
+      <egallTask>
+      </egallTask>
+      <resolveridsTask>
+      </resolveridsTask>
+      <metainfoTask>
+      </metainfoTask>
+   </ResolverDataService>
+
+   <GTPInfoService>
+      <DefaultSystem>
+         <EngineName value="GTPProbeInfoEngine" />
+         <TaskNames value="Probe Array Ortholog Annotation" />
+         <InputTypeNames value="Reporters Sequences" />
+         <SelectedTask value="Probe" />
+         <InputType value="Reporters" />        <!-- type of input -->
+         <DbServer value="usctap0244.merck.com" />  <!-- Deployment -->
+         <DbSource value="GTP_APP" />
+         <DbProvider value="SQLOLEDB" />        <!-- sql server -->
+         <DbProvider2 value="MSDAORA" />        <!-- oracle -->
+         <DebugDb value="False" />              <!-- Debug task (True or False) -->
+         <ResolverDb value="MRLSNAP" />         <!-- Resolver instance -->
+      </DefaultSystem>
+      <ProbeTask>
+         <IncludeXhyb value="False" />          <!-- True/False  for probe -->
+      </ProbeTask>
+      <ArrayTask>
+      </ArrayTask>
+      <OrthologTask>
+         <OnlyReciprocal value="False" />       <!-- True/False  for probe -->
+         <Evalue value="1.0" />                 <!-- True/False  for probe -->
+      </OrthologTask>
+      <Annotation>
+      </Annotation>
+   </GTPInfoService>
+
+   <BSAInfoService>
+      <DefaultSystem>
+         <EngineName value="BSAProbeInfoEngine" />
+         <TaskNames value="Annotation Columns" />
+         <InputTypeNames value="chips bsa pc puc" />
+         <SelectedTask value="Annotation" />
+         <InputType value="bsa" />              <!-- type of input -->
+         <DebugDb value="False" />              <!-- Debug task (True or False) -->
+         <!-- ====================================== -->
+         <!-- Database context:                      -->
+         <!-- If the context is  "Production"        -->
+         <!-- then we're connecting to the           -->
+         <!-- production computer where user id,     -->
+         <!-- user pwd, etc. is set in code; else    -->
+         <!-- we'll look at cfg paramters (and if    -->
+         <!-- nothing is set, code sets values.      -->
+         <!-- ====================================== -->
+         <DbContext value="Production" />
+      </DefaultSystem>
+      <AnnotationTask>
+         <CollapseCols value="False" />         <!-- Collapse columns (True or False) -->
+      </AnnotationTask>
+   </BSAInfoService>
+
+   <GeneSetService>
+      <DefaultSystem>
+         <EngineName value="BSAProbeInfoEngine" />
+         <TaskNames value="getgs initialize getinfo" />
+         <SelectedTask value="getgs" />
+         <DebugDb value="False" />              <!-- Debug task (True or False) -->
+         <DbServer value="usctap0244.merck.com" />  
+         <DbSource value="gsr_app" />
+         <DbUser1 value="[]" />
+         <DbUserPwd1 value="[]" />
+         <DbProvider value="SQLOLEDB" />        <!-- sql server -->
+         <DbProviderOra value="MSDAORA" />      <!-- oracle -->
+         <!-- ====================================== -->
+         <!-- parameter related                      -->
+         <!-- ====================================== -->
+         <speciesnames value="human;mouse;rat;dog;" />
+         <sourcenames2 value="biosets;kegg,genmapp;go_process;go_localization;go_function;superarray;curated;" />
+         <curatedsources2 value="kegg;genmapp;go_process;go_localization;go_function;superarray;" />
+         <sourcenames value="biosets;kegg;go_process;go_localization;go_function;curated;user;genego;chromosomes;tissue;sigup;sigdown;cellcyc;cps;cancer;monkey_tissue;siRNA_Cancer" />
+         <curatedsources value="kegg;go_process;go_localization;go_function;" />
+     </DefaultSystem>
+      <getgs>
+      </getgs>
+      <initialize>
+      </initialize>
+      <getinfo>
+      </getinfo>
+   </GeneSetService>
+
+   <GenePairService>
+      <DefaultSystem>
+         <EngineName value="GenePairEngine" />
+         <TaskNames value="getgp getsources getinfo" />
+         <SelectedTask value="getgp" />
+         <DebugDb value="False" />              <!-- Debug task (True or False) -->
+         <DbServer value="usctap0244.merck.com" />  
+         <DbSource value="gsr_app" />
+         <DbUser1 value="[]" />
+         <DbUserPwd1 value="[]" />
+         <DbProvider value="SQLOLEDB" />        <!-- sql server -->
+         <DbProviderOra value="MSDAORA" />      <!-- oracle -->
+         <!-- ====================================== -->
+         <!-- parameter related                      -->
+         <!-- ====================================== -->
+	 <Layers value="1" />  	
+	 <IgnoreFilterIfNull value="false" />  	
+     </DefaultSystem>
+   </GenePairService>
+
+    <TGIGeneSetsService>
+      <DefaultSystem>
+         <ServiceObjectID value="TGIGeneSetsService" />
+         <Debug value="False" />              <!-- Debug task (True or False) -->
+         <DbServer value="usctap0244.merck.com" />  
+         <DbServerOracle value="notused" />  
+         <DbSource value="gtp_sets" />
+         <DbUser1 value="[]" />
+         <DbUserPwd1 value="[]" />
+         <DbProvider value="SQLOLEDB" />        <!-- sql server -->
+         <DbProviderOracle value="MSDAORA" />   <!-- oracle -->
+         <TaskNames value="TGISetAnnotate TGITranslate" />
+         <SelectedTask value="TGISetAnnotate" />
+         <ClientProtocol value="Local" />       <!-- Remote,Local -->
+      </DefaultSystem>
+      <TGISetAnnotateTask>
+         <maxsetsize value="200" />
+         <minsetsize value="1" />
+         <maxpvalue value="1.0" />  
+         <maxevalue value="1.0" />  
+      </TGISetAnnotateTask>
+      <TGITranslateTask>
+         <arraytranscript value="true" />
+         <reciprocal value="false" />
+         <maxhomolog value="1" />               <!-- Integer. 1 to 5 -->
+         <synteny value="false" />
+         <evalue value="-2" />
+         <homologoption value="false" />
+         <excludealternatesymbol value="true" />
+         <viagenemodels value="false" />
+         <representative value="false" />
+      </TGITranslateTask>
+   </TGIGeneSetsService>
+
+   <GGCDataService>
+      <DefaultSystem>
+         <EngineName value="GGCData Engine" />
+         <TaskNames value="initializebatch initializechunk endbatch endchunk writeresults readresults readbatch" />
+         <SelectedTask value="initializebatch" />
+         <DbServer value="se-atlas" />          <!-- Development  -->
+         <DbSource value="GGC" />
+         <DbProvider value="SQLOLEDB" />        <!-- sql server -->
+         <DbUser value="ggc_user" />
+         <DebugDb value="False" />              <!-- Debug task (True or False) -->
+         <chunkfile value="ggc_chunk" />        <!-- Prefix of chunk file name -->
+         <initfile value="ggc_batchinit" />     <!-- Prefix of init file name -->
+         <writetodb value="false" />             <!-- True or False -->
+         <filecloserate value="0" />            <!-- No. of writes before close (0 disables)-->
+      </DefaultSystem>
+      <initializebatchTask>
+         <DebugTask value="True" />             <!-- Debug task (True or False) -->
+      </initializebatchTask>
+      <initializechunkTask>
+         <DebugTask value="True" />             <!-- Debug task (True or False) -->
+      </initializechunkTask>
+      <writeresultsTask>
+         <DebugTask value="True" />             <!-- Debug task (True or False) -->
+      </writeresultsTask>
+      <endchunkTask>
+         <DebugTask value="True" />             <!-- Debug task (True or False) -->
+      </endchunkTask>
+      <endbatchTask>
+         <DebugTask value="True" />             <!-- Debug task (True or False) -->
+      </endbatchTask>
+      <readresultsTask>
+         <DebugTask value="True" />             <!-- Debug task (True or False) -->
+      </readresultsTask>
+      <readbatchTask>
+         <DebugTask value="True" />             <!-- Debug task (True or False) -->
+      </readbatchTask>
+   </GGCDataService>
+
+   <TGADataService>
+      <DefaultSystem>
+         <EngineName value="TGAData Engine" />
+         <TaskNames value="initializebatch endbatch writetraitstats" />
+         <SelectedTask value="initializebatch" />
+         <DbServer value="se-atlas" />          <!-- Development  -->
+         <DbSource value="TGA" />
+         <DbProvider value="SQLOLEDB" />        <!-- sql server -->
+         <DbUser value="ggc_user" />
+         <DebugDb value="False" />              <!-- Debug task (True or False) -->
+         <tstatfile value="TGA_tstats.dat" />   <!-- Prefix of chunk file name -->
+         <fstatfile value="TGA_fstats.dat" />   <!-- Prefix of chunk file name -->
+         <bcpfile_t value="TGA_tstats.fmt" />   <!-- bcp format file name -->
+         <bcpfile_f value="TGA_fstats.fmt" />   <!-- bcp format file name -->
+         <writetodb value="true" />             <!-- True or False -->
+         <filecloserate value="500" />          <!-- No. of writes before close -->
+         <analysistype value="trait-gene anova" />     <!-- gene-gene or trait-gene -->
+      </DefaultSystem>
+      <initializebatchTask>
+         <DebugTask value="True" />             <!-- Debug task (True or False) -->
+      </initializebatchTask>
+      <writetraitstatsTask>
+         <DebugTask value="True" />             <!-- Debug task (True or False) -->
+      </writetraitstatsTask>
+      <endbatchTask>
+         <DebugTask value="True" />             <!-- Debug task (True or False) -->
+      </endbatchTask>
+   </TGADataService>
+
+</analytical_services>

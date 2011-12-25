@@ -1,0 +1,119 @@
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/R
+END
+BSAInfo.R
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/R/BSAInfo.R
+END
+BSASimplify.R
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/R/BSASimplify.R
+END
+RDASummary.R
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/R/RDASummary.R
+END
+HDF5WriteAttribute.R
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/R/HDF5WriteAttribute.R
+END
+First.R
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/R/First.R
+END
+BSAExecute.R
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/R/BSAExecute.R
+END
+RDAExecute.R
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/R/RDAExecute.R
+END
+RDANames.R
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/R/RDANames.R
+END
+BATInit.R
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/R/BATInit.R
+END
+ResolverLogin.R
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/R/ResolverLogin.R
+END
+HDF5WriteData.R
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/R/HDF5WriteData.R
+END
+RDAFields.R
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/R/RDAFields.R
+END
+HDF5Summary.R
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/R/HDF5Summary.R
+END
+RDAExamples.R
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/R/RDAExamples.R
+END
+HDF5ReadAttribute.R
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/R/HDF5ReadAttribute.R
+END
+RDAids.R
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/R/RDAids.R
+END
+HDF5Execute.R
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/R/HDF5Execute.R
+END
+HDF5ReadData.R
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/R/HDF5ReadData.R
+END
+GetResolverEG.R
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/!svn/ver/1030/LEGACY/trunk/software/pipeline/R/bat/R/GetResolverEG.R
+END

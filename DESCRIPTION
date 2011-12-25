@@ -1,0 +1,11 @@
+Package: bat
+Type: Package
+Title: Bioinformatics Analysis Toolkit
+Version: 2.01
+Date: 2009-09-24
+Author: Roy Kuraisa <roy_kuraisa@merck.com>
+Maintainer: Jason Eglin <jason_eglin@merck.com>
+Description: Data access to Resolver; BSA; HDF5 file 
+License: GPL (>=2)
+LazyLoad: yes
+Packaged: 2009-09-25 15:08:59 UTC; eglinj
