@@ -1,11 +1,10 @@
-Package: bat
+Package: rHDF5
 Type: Package
-Title: Bioinformatics Analysis Toolkit
+Title: HDF5 File access
 Version: 2.01
-Date: 2009-09-24
+Date: 2011-24-12
 Author: Roy Kuraisa <roy_kuraisa@merck.com>
 Maintainer: Jason Eglin <jason_eglin@merck.com>
-Description: Data access to Resolver; BSA; HDF5 file 
+Description: Data access to HDF5 files 
 License: GPL (>=2)
 LazyLoad: yes
-Packaged: 2009-09-25 15:08:59 UTC; eglinj
