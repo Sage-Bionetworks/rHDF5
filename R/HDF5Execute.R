@@ -78,6 +78,8 @@ function(task=c(),
 	for(option in tempOptions)
 		paramAttr[option]<-attributes[option]
     attributes<-c(paramAttr)
+    filename <- path.expand(filename)
+
     #
     # invoke the dll
     #
