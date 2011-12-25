@@ -1,2 +1,0 @@
-PKG_CXXFLAGS = -I${SAGE_OPTS}/include -I./include -O3 -w -c -fmessage-length=0 -fPIC
-PKG_LIBS = -L${SAGE_OPTS}/lib -lhdf5 -lz -lsz -lstdc++ 
