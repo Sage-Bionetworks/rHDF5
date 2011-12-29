@@ -1,7 +1,7 @@
 #ifndef __COMPOUNDTYPE_H_
 #define __COMPOUNDTYPE_H_       
 
-#include <string>
+#include <cstring>
 #include <vector>
 #include <sstream>
 #include "HDF5DataType.h"

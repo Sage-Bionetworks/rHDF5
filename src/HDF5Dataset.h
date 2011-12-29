@@ -3,7 +3,7 @@
 #endif
 #ifndef __HDF5DATASET_H_
 #define __HDF5DATASET_H_        
-#include <string>
+#include <cstring>
 #include <algorithm>
 #include "hdf5.h"
 #include "HDF5Object.h"
