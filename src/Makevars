@@ -1,9 +1,9 @@
-PKG_CXXFLAGS = -I../libs/include -I./include -O3 -w -c -fmessage-length=0 -fPIC
+PKG_CXXFLAGS = -I../libs/include -O3 -w -c -fmessage-length=0 -fPIC
 PKG_LIBS = -L../libs/lib -lhdf5 -lz -lsz -lstdc++
 
 all: mylibs $(SHLIB)
 
 mylibs:
-	cd szip; ./configure --prefix=`pwd`/../../libs; make install
-	cd hdf5; ./configure --prefix=`pwd`/../../libs; make install
+	cd szip; HERE=`pwd`; if [ ! -d ../../libs ]; then mkdir ../../libs/; fi; cd ../../libs/; PREFIX=`pwd`; cd $$HERE; ./configure --prefix=$$PREFIX; make install
+	cd hdf5; HERE=`pwd`; if [ ! -d ../../libs ]; then mkdir ../../libs/; fi; cd ../../libs/; PREFIX=`pwd`; cd $$HERE; ./configure --prefix=$$PREFIX; make install
 
