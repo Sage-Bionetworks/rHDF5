@@ -3,7 +3,7 @@ Type: Package
 Title: HDF5 File access
 Version: 1.0
 Date: 2011-24-12
-Author: Roy Kuraisa <roy_kuraisa@merck.com>, Wilson Lau, Jason Eglin <jason_eglin@merck.com>, Matt Furia <matt.furia@sagebase.org>
+Author: Roy Kuraisa <roy_kuraisa@merck.com>, Wilson Lau <wilsonlaurosetta@gmail.com>, Jason Eglin <jason_eglin@merck.com>, Matt Furia <matt.furia@sagebase.org>
 Maintainer: Matt Furia <matt.furia@sagebase.org>
 Description: Data access to HDF5 files. Based on a package originally authored by Roy Kuraisa and donated to Sage Bionetworks by Merck & Co.
 License: GPL (>=2)

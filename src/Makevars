@@ -7,3 +7,8 @@ mylibs:
 	cd szip; ./configure; make install
 	cd hdf5; ./configure; make install
 
+shlib-clean: clean
+
+clean:
+	rm -rf ../src-i386
+	rm -rf ../src-x86-64
