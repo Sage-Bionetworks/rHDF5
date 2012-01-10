@@ -61,7 +61,12 @@ void test_exit_definitions(void);
  *              September 25, 2001
  *
  * Modifications:
- *
+ *              Raymond Lu
+ *              16 Dec 2009
+ *              On Boeing's OpenVMS, the value of EXIT_FAILURE is 268435458.
+ *              (The test is in test_exit_definitions.)  Their document says
+ *              it's supposed to be 2.  I commented it out for further
+ *              consideration.
  *-------------------------------------------------------------------------
  */
 void
@@ -70,7 +75,9 @@ test_configure(void)
     /* Output message about test being performed */
     MESSAGE(5, ("Testing configure definitions\n"));
     test_config_ctypes();
+#ifndef H5_VMS
     test_exit_definitions();
+#endif
 }
 
 
@@ -129,7 +136,7 @@ test_config_ctypes(void)
 
     /* standard C99 basic types */
 #if H5_SIZEOF_LONG_LONG > 0
-    vrfy_cint_type(long_long, unsigned long_long, H5_SIZEOF_LONG_LONG);
+    vrfy_cint_type(long long, unsigned long long, H5_SIZEOF_LONG_LONG);
 #endif
 
 #if H5_SIZEOF_INT8_T > 0

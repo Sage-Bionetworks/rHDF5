@@ -20,7 +20,13 @@
 #ifndef H5Vprivate_H
 #define H5Vprivate_H
 
-#include "H5private.h"
+/* Private headers needed by this file */
+#include "H5private.h"		/* Generic Functions			*/
+#include "H5Eprivate.h"		/* Error handling		  	*/
+
+/* Vector-Vector sequence operation callback */
+typedef herr_t (*H5V_opvv_func_t)(hsize_t dst_off, hsize_t src_off,
+    size_t len, void *udata);
 
 /* Vector comparison functions like Fortran66 comparison operators */
 #define H5V_vector_eq_s(N,V1,V2) (H5V_vector_cmp_s (N, V1, V2)==0)
@@ -51,9 +57,7 @@ H5_DLL hsize_t H5V_hyper_stride(unsigned n, const hsize_t *size,
 				 const hsize_t *offset,
 				 hsize_t *stride);
 H5_DLL htri_t H5V_hyper_disjointp(unsigned n, const hsize_t *offset1,
-				   const size_t *size1,
-				   const hsize_t *offset2,
-				   const size_t *size2);
+    const uint32_t *size1, const hsize_t *offset2, const uint32_t *size2);
 H5_DLL htri_t H5V_hyper_eq(unsigned n, const hsize_t *offset1,
 			    const hsize_t *size1, const hsize_t *offset2,
 			    const hsize_t *size2);
@@ -86,7 +90,12 @@ H5_DLL hsize_t H5V_array_offset(unsigned n, const hsize_t *total_size,
 H5_DLL herr_t H5V_array_calc(hsize_t offset, unsigned n,
     const hsize_t *total_size, hsize_t *coords);
 H5_DLL herr_t H5V_chunk_index(unsigned ndims, const hsize_t *coord,
-    const size_t *chunk, const hsize_t *down_nchunks, hsize_t *chunk_idx);
+    const uint32_t *chunk, const hsize_t *down_nchunks, hsize_t *chunk_idx);
+H5_DLL ssize_t H5V_opvv(size_t dst_max_nseq, size_t *dst_curr_seq, size_t dst_len_arr[],
+    hsize_t dst_off_arr[],
+    size_t src_max_nseq, size_t *src_curr_seq, size_t src_len_arr[],
+    hsize_t src_off_arr[],
+    H5V_opvv_func_t op, void *op_data);
 H5_DLL ssize_t H5V_memcpyvv(void *_dst,
     size_t dst_max_nseq, size_t *dst_curr_seq, size_t dst_len_arr[], hsize_t dst_off_arr[],
     const void *_src,
@@ -301,4 +310,132 @@ H5V_vector_inc(int n, hsize_t *v1, const hsize_t *v2)
     while (n--) *v1++ += *v2++;
 }
 
-#endif
+/* Lookup table for general log2(n) routine */
+static const unsigned char LogTable256[] =
+{
+    0, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3,
+    4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+    5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+    5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+    6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+    6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+    6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+    6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+    7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+    7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+    7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+    7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+    7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+    7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+    7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+    7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7
+};
+
+
+/*-------------------------------------------------------------------------
+ * Function:    H5V_log2_gen
+ *
+ * Purpose:     Determines the log base two of a number (i.e. log2(n)).
+ *              (i.e. the highest bit set in a number)
+ *
+ * Note:        This is from the "Bit Twiddling Hacks" at:
+ *                  http://graphics.stanford.edu/~seander/bithacks.html#IntegerLogLookup
+ *
+ *              The version on the web-site is for 32-bit quantities and this
+ *              version has been extended for 64-bit quantities.
+ *
+ * Return:      log2(n) (always - no failure condition)
+ *
+ * Programmer:  Quincey Koziol
+ *              Monday, March  6, 2006
+ *
+ *-------------------------------------------------------------------------
+ */
+static H5_inline unsigned UNUSED
+H5V_log2_gen(uint64_t n)
+{
+    unsigned r;                         /* r will be log2(n) */
+    register unsigned int t, tt, ttt;   /* temporaries */
+
+#ifdef H5_BAD_LOG2_CODE_GENERATED
+    if(n > (uint64_t)0x7fffffffffffffff)
+        r = 63;
+    else {
+        n &= (uint64_t)0x7fffffffffffffff;
+#endif /* H5_BAD_LOG2_CODE_GENERATED */
+        if((ttt = (unsigned)(n >> 32)))
+            if((tt = (unsigned)(n >> 48)))
+                r = (t = (unsigned)(n >> 56)) ? 56 + (unsigned)LogTable256[t] : 48 + (unsigned)LogTable256[tt & 0xFF];
+            else
+                r = (t = (unsigned)(n >> 40)) ? 40 + (unsigned)LogTable256[t] : 32 + (unsigned)LogTable256[ttt & 0xFF];
+        else
+            if((tt = (unsigned)(n >> 16)))
+                r = (t = (unsigned)(n >> 24)) ? 24 + (unsigned)LogTable256[t] : 16 + (unsigned)LogTable256[tt & 0xFF];
+            else
+                /* Added 'uint8_t' cast to pacify PGCC compiler */
+                r = (t = (unsigned)(n >> 8)) ? 8 + (unsigned)LogTable256[t] : (unsigned)LogTable256[(uint8_t)n];
+#ifdef H5_BAD_LOG2_CODE_GENERATED
+    } /* end else */
+#endif /* H5_BAD_LOG2_CODE_GENERATED  */
+
+    return(r);
+} /* H5V_log2_gen() */
+
+
+/* Lookup table for specialized log2(n) of power of two routine */
+static const unsigned MultiplyDeBruijnBitPosition[32] =
+{
+      0, 1, 28, 2, 29, 14, 24, 3, 30, 22, 20, 15, 25, 17, 4, 8,
+        31, 27, 13, 23, 21, 19, 16, 7, 26, 12, 18, 6, 11, 5, 10, 9
+};
+
+
+/*-------------------------------------------------------------------------
+ * Function:    H5V_log2_of2
+ *
+ * Purpose:     Determines the log base two of a number (i.e. log2(n)).
+ *              (i.e. the highest bit set in a number)
+ *
+ * Note:        **N must be a power of two** and is limited to 32-bit quantities.
+ *
+ *              This is from the "Bit Twiddling Hacks" at:
+ *                  http://graphics.stanford.edu/~seander/bithacks.html#IntegerLogDeBruijn
+ *
+ * Return:      log2(n) (always - no failure condition)
+ *
+ * Programmer:  Quincey Koziol
+ *              Monday, Febraury 27, 2006
+ *
+ *-------------------------------------------------------------------------
+ */
+static H5_inline unsigned UNUSED
+H5V_log2_of2(uint32_t n)
+{
+#ifndef NDEBUG
+    HDassert(POWER_OF_TWO(n));
+#endif /* NDEBUG */
+    return(MultiplyDeBruijnBitPosition[(n * (uint32_t)0x077CB531UL) >> 27]);
+} /* H5V_log2_of2() */
+
+
+/*-------------------------------------------------------------------------
+ * Function:    H5V_limit_enc_size
+ *
+ * Purpose:     Determine the # of bytes needed to encode values within a
+ *              range from 0 to a given limit
+ *
+ * Return:      Number of bytes needed
+ *
+ * Programmer:  Quincey Koziol
+ *              Thursday, March 13, 2008
+ *
+ *-------------------------------------------------------------------------
+ */
+static H5_inline unsigned UNUSED
+H5V_limit_enc_size(uint64_t limit)
+{
+    return (H5V_log2_gen(limit) / 8) + 1;
+} /* end H5V_limit_enc_size() */
+
+#endif /* H5Vprivate_H */
+

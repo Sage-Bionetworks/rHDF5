@@ -31,7 +31,7 @@
 /* Macros */
 
 #define IS_H5FD_MPIO(f)	/* (H5F_t *f) */				    \
-    (H5FD_MPIO==H5F_get_driver_id(f))
+    (H5FD_MPIO==H5F_DRIVER_ID(f))
 
 #ifdef H5_HAVE_PARALLEL
 /*Turn on H5FDmpio_debug if H5F_DEBUG is on */
@@ -52,6 +52,10 @@ H5_DLL herr_t H5Pget_fapl_mpio(hid_t fapl_id, MPI_Comm *comm/*out*/,
 			MPI_Info *info/*out*/);
 H5_DLL herr_t H5Pset_dxpl_mpio(hid_t dxpl_id, H5FD_mpio_xfer_t xfer_mode);
 H5_DLL herr_t H5Pget_dxpl_mpio(hid_t dxpl_id, H5FD_mpio_xfer_t *xfer_mode/*out*/);
+H5_DLL herr_t H5Pset_dxpl_mpio_collective_opt(hid_t dxpl_id, H5FD_mpio_collective_opt_t opt_mode);
+H5_DLL herr_t H5Pset_dxpl_mpio_chunk_opt(hid_t dxpl_id, H5FD_mpio_chunk_opt_t opt_mode);
+H5_DLL herr_t H5Pset_dxpl_mpio_chunk_opt_num(hid_t dxpl_id, unsigned num_chunk_per_proc);
+H5_DLL herr_t H5Pset_dxpl_mpio_chunk_opt_ratio(hid_t dxpl_id, unsigned percent_num_proc_per_chunk);
 #ifdef __cplusplus
 }
 #endif

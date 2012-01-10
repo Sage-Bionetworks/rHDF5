@@ -1,6 +1,3 @@
-#############################
-Expected output for 'h5dump tcompound_complex.h5'
-#############################
 HDF5 "tcompound_complex.h5" {
 GROUP "/" {
    DATASET "CompoundComplex" {
@@ -21,7 +18,7 @@ GROUP "/" {
          H5T_ARRAY { [5][6] H5T_STD_I16BE } "d_name";
          H5T_IEEE_F32BE "e_name";
          H5T_ARRAY { [10] H5T_IEEE_F64BE } "f_name";
-         H5T_STD_I8BE "g_name";
+         H5T_STD_I8LE "g_name";
       }
       DATASPACE  SIMPLE { ( 6 ) / ( 6 ) }
       DATA {

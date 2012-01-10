@@ -20,6 +20,8 @@
  * Purpose:	Test local heaps used by symbol tables (groups).
  */
 #include "h5test.h"
+#include "H5srcdir.h"
+#include "H5ACprivate.h"
 #include "H5HLprivate.h"
 #include "H5Iprivate.h"
 
@@ -27,6 +29,8 @@ const char *FILENAME[] = {
     "lheap",
     NULL
 };
+
+#define TESTFILE "tsizeslheap.h5"
 
 #define NOBJS   40
 
@@ -57,6 +61,7 @@ main(void)
     H5F_t	*f=NULL;		/*hdf5 file pointer		*/
     char	filename[1024];		/*file name			*/
     haddr_t	heap_addr;		/*local heap address		*/
+    H5HL_t      *heap = NULL;           /*local heap			*/
     size_t	obj[NOBJS];		/*offsets within the heap	*/
     int		i, j;			/*miscellaneous counters	*/
     char	buf[1024];		/*the value to store		*/
@@ -66,6 +71,7 @@ main(void)
     h5_reset();
     fapl = h5_fileaccess();
 
+
     /*
      * Test writing to the heap...
      */
@@ -73,27 +79,38 @@ main(void)
     h5_fixname(FILENAME[0], fapl, filename, sizeof filename);
     if ((file=H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, fapl))<0)
 	goto error;
-    if (NULL==(f=H5I_object(file))) {
+    if(NULL == (f = (H5F_t *)H5I_object(file))) {
 	H5_FAILED();
-	H5Eprint(stdout);
+	H5Eprint2(H5E_DEFAULT, stdout);
 	goto error;
     }
-    if (H5HL_create(f, H5P_DATASET_XFER_DEFAULT, 0, &heap_addr/*out*/)<0) {
+    if(H5HL_create(f, H5P_DATASET_XFER_DEFAULT, (size_t)0, &heap_addr/*out*/) < 0) {
 	H5_FAILED();
-	H5Eprint(stdout);
+	H5Eprint2(H5E_DEFAULT, stdout);
 	goto error;
     }
-    for (i = 0; i < NOBJS; i++) {
+    if (NULL == (heap = H5HL_protect(f, H5P_DATASET_XFER_DEFAULT, heap_addr, H5AC_WRITE))) {
+        H5_FAILED();
+        H5Eprint2(H5E_DEFAULT, stdout);
+        goto error;
+    }
+    for(i = 0; i < NOBJS; i++) {
         sprintf(buf, "%03d-", i);
-        for (j=4; j<i; j++) buf[j] = '0' + j%10;
-        if (j>4) buf[j] = '\0';
+        for(j = 4; j < i; j++)
+            buf[j] = '0' + j % 10;
+        if(j > 4)
+            buf[j] = '\0';
 
-        if ((size_t)(-1)==(obj[i]=H5HL_insert(f, H5P_DATASET_XFER_DEFAULT, heap_addr, strlen(buf)+1,
-					      buf))) {
+        if((size_t)(-1) == (obj[i] = H5HL_insert(f, H5P_DATASET_XFER_DEFAULT, heap, strlen(buf) + 1, buf))) {
 	    H5_FAILED();
-	    H5Eprint(stdout);
+	    H5Eprint2(H5E_DEFAULT, stdout);
 	    goto error;
 	}
+    }
+    if(H5HL_unprotect(heap) < 0) {
+        H5_FAILED();
+        H5Eprint2(H5E_DEFAULT, stdout);
+        goto error;
     }
     if (H5Fclose(file)<0) goto error;
     PASSED();
@@ -104,50 +121,80 @@ main(void)
 
     TESTING("local heap read");
     h5_fixname(FILENAME[0], fapl, filename, sizeof filename);
-    if ((file=H5Fopen(filename, H5F_ACC_RDONLY, fapl))<0) goto error;
-    if (NULL==(f=H5I_object(file))) {
-	H5_FAILED();
-	H5Eprint(stdout);
-	goto error;
+    if((file = H5Fopen(filename, H5F_ACC_RDONLY, fapl)) < 0) goto error;
+    if(NULL == (f = (H5F_t *)H5I_object(file))) {
+        H5_FAILED();
+        H5Eprint2(H5E_DEFAULT, stdout);
+        goto error;
     }
-    for (i=0; i<NOBJS; i++) {
-        const H5HL_t *heap = NULL;
+    for(i = 0; i < NOBJS; i++) {
+        sprintf(buf, "%03d-", i);
+        for(j = 4; j < i; j++)
+            buf[j] = '0' + j % 10;
+        if(j > 4)
+            buf[j] = '\0';
 
-	sprintf(buf, "%03d-", i);
-        for (j=4; j<i; j++) buf[j] = '0' + j%10;
-        if (j>4) buf[j] = '\0';
+        if (NULL == (heap = H5HL_protect(f, H5P_DATASET_XFER_DEFAULT, heap_addr, H5AC_READ))) {
+            H5_FAILED();
+            H5Eprint2(H5E_DEFAULT, stdout);
+            goto error;
+        }
 
-        if (NULL == (heap = H5HL_protect(f, H5P_DATASET_XFER_DEFAULT, heap_addr))) {
-	    H5_FAILED();
-	    H5Eprint(stdout);
-	    goto error;
-	}
+        if (NULL == (s = (const char *)H5HL_offset_into(heap, obj[i]))) {
+            H5_FAILED();
+            H5Eprint2(H5E_DEFAULT, stdout);
+            goto error;
+        }
 
-        if (NULL == (s = H5HL_offset_into(f, heap, obj[i]))) {
-	    H5_FAILED();
-	H5Eprint(stdout);
-	    goto error;
-	}
+        if (strcmp(s, buf)) {
+            H5_FAILED();
+            printf("    i=%d, heap offset=%lu\n", i, (unsigned long)(obj[i]));
+            printf("    got: \"%s\"\n", s);
+            printf("    ans: \"%s\"\n", buf);
+            goto error;
+        }
 
-	if (strcmp(s, buf)) {
-	    H5_FAILED();
-	    printf("    i=%d, heap offset=%lu\n", i, (unsigned long)(obj[i]));
-	    printf("    got: \"%s\"\n", s);
-	    printf("    ans: \"%s\"\n", buf);
-	    goto error;
-	}
-
-        if (H5HL_unprotect(f, H5P_DATASET_XFER_DEFAULT, heap, heap_addr) < 0) {
-	    H5_FAILED();
-	    H5Eprint(stdout);
-	    goto error;
-	}
+        if(H5HL_unprotect(heap) < 0) {
+            H5_FAILED();
+            H5Eprint2(H5E_DEFAULT, stdout);
+            goto error;
+        }
     }
+
     if (H5Fclose(file)<0) goto error;
     PASSED();
 
+    /* Check opening existing file non-default sizes of lengths and addresses */
+    TESTING("opening pre-created file with non-default sizes");
+    {
+        const char *testfile = H5_get_srcdir_filename(TESTFILE); /* Corrected test file name */
+        hid_t dset = -1;
+#ifdef H5_VMS
+        file = H5Fopen(TESTFILE, H5F_ACC_RDONLY, H5P_DEFAULT);
+#else
+        file = H5Fopen(testfile, H5F_ACC_RDONLY, H5P_DEFAULT);
+#endif
+        if(file >= 0){
+            if((dset = H5Dopen2(file, "/Dataset1", H5P_DEFAULT)) < 0)
+                TEST_ERROR
+            if(H5Dclose(dset) < 0) TEST_ERROR
+            if(H5Fclose(file) < 0) TEST_ERROR
+        }
+        else {
+            H5_FAILED();
+            printf("***cannot open the pre-created non-default sizes test file (%s)\n",
+                testfile);
+            goto error;
+        } /* end else */
+    }
+    PASSED();
+
+    /* Verify symbol table messages are cached */
+    if(h5_verify_cached_stabs(FILENAME, fapl) < 0) TEST_ERROR
+
     puts("All local heap tests passed.");
     h5_cleanup(FILENAME, fapl);
+
     return 0;
 
  error:
@@ -157,3 +204,4 @@ main(void)
     } H5E_END_TRY;
     return 1;
 }
+

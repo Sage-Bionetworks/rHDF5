@@ -36,7 +36,7 @@
 #endif
 
 #include "h5test.h"
-#include "H5Cpp.h"	// C++ API header file
+#include "H5Cpp.h"
 
 #ifndef H5_NO_NAMESPACE
     using namespace H5;
@@ -100,8 +100,8 @@ void issue_fail_msg(const char* where, int line, const char* file_name,
 {
     //if (GetTestVerbosity()>=VERBO_HI)
     {
-	cerr << ">>> FAILED in " << where << " at line " << line
-	     << " in " << file_name << " - " << message << endl << endl;
+        cerr << ">>> FAILED in " << where << " at line " << line
+             << " in " << file_name << " - " << message << endl << endl;
     }
 }
 
@@ -132,11 +132,48 @@ int check_values (hsize_t i, hsize_t j, int apoint, int acheck)
     {
 	cerr << "    Read different values than written.\n" << endl;
 	cerr << "    At index " << (unsigned long)i << "," <<
-	(unsigned long)j << endl;
+   	(unsigned long)j << endl;
 	return -1;
     }
     return 0;
 } // check_values
+
+/*-------------------------------------------------------------------------
+ * Function:	verify_val (const char*, const char*,...)
+ *
+ * Purpose:	Compares two character strings.  If they are
+ *		different, the function will print out a message and the
+ *		different values.
+ *
+ * Return:	Success:	0
+ *
+ *		Failure:	-1
+ *
+ * Programmer:	Binh-Minh Ribler
+ *		May 2, 2010
+ *
+ * Modifications:
+ *
+ *-------------------------------------------------------------------------
+ */
+void verify_val(const char* x, const char* value, const char* where, int line, const char* file_name)
+{
+    if (GetTestVerbosity()>=VERBO_HI)
+    {
+        cerr << endl;
+        cerr << "   Call to routine: " << where << " at line " << line
+             << " in " << file_name <<  " had value " << x << endl;
+    }
+    if (strcmp(x, value) != 0)
+    {
+        cerr << endl;
+        cerr << "*** UNEXPECTED VALUE from " << where << " should be "
+             << value << ", but is " << x << " at line " << line
+             << " in " << file_name << endl;
+        IncTestNumErrs();
+        throw TestFailedException(where, "");
+    }
+}
 
 //--------------------------------------------------------------------------
 // Function:    InvalidActionException default constructor
@@ -147,7 +184,7 @@ InvalidActionException::InvalidActionException():Exception(){}
 // Function:    InvalidActionException overloaded constructor
 //
 // Purpose:	Creates an InvalidActionException with the name of the function,
-//		which the failure should have occurred but didn't, and a
+//              which the failure should have occurred but didn't, and a
 //		message explaining why it should fail.
 // Parameters
 //		func_name - IN: Name of the function where failure should occur
@@ -169,7 +206,7 @@ TestFailedException::TestFailedException():Exception(){}
 // Function:    TestFailedException overloaded constructor
 //
 // Purpose:	Creates an TestFailedException with the name of the function,
-//		which the failure should have occurred but didn't, and a
+//              which the failure should have occurred but didn't, and a
 //		message explaining why it should fail.
 // Parameters
 //		func_name - IN: Name of the function where failure should occur
@@ -178,7 +215,7 @@ TestFailedException::TestFailedException():Exception(){}
 TestFailedException::TestFailedException(const H5std_string func_name, const H5std_string message) : Exception(func_name, message) {}
 
 //--------------------------------------------------------------------------
-// Function:	TestFailedException destructor
+// Function:    TestFailedException destructor
 //--------------------------------------------------------------------------
 TestFailedException::~TestFailedException() {}
 

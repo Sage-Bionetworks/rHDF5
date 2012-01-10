@@ -1,6 +1,3 @@
-#############################
-Expected output for 'h5dump -B tfcontents2.h5'
-#############################
 HDF5 "tfcontents2.h5" {
 SUPER_BLOCK {
    SUPERBLOCK_VERSION 0
@@ -11,7 +8,6 @@ SUPER_BLOCK {
    LENGTH_SIZE 8
    BTREE_RANK 16
    BTREE_LEAF 4
-   FILE_DRIVER H5FD_SEC2
    ISTORE_K 32
 }
 USER_BLOCK {

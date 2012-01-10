@@ -28,7 +28,8 @@ void parse_command_line (int argc, const char *argv[]);
 #define TRUE 1
 #define FALSE 0
 
-static const char *progname="getub";
+/* Name of tool */
+#define PROGRAMNAME "getub"
 char *nbytes = NULL;
 
 static const char *s_opts = "c:";	/* add more later ? */
@@ -85,19 +86,19 @@ parse_command_line (int argc, const char *argv[])
       switch ((char) opt)
 	{
 	case 'c':
-	  nbytes = strdup (opt_arg);
+	  nbytes = HDstrdup (opt_arg);
 	  break;
 	case '?':
 	default:
-	  usage (progname);
+	  usage (h5tools_getprogname());
 	  exit (EXIT_FAILURE);
 	}
     }
 
   if (argc <= opt_ind)
     {
-      error_msg (progname, "missing file name\n");
-      usage (progname);
+      error_msg("missing file name\n");
+      usage (h5tools_getprogname());
       exit (EXIT_FAILURE);
     }
 }
@@ -111,44 +112,47 @@ main (int argc, const char *argv[])
   long res;
   char *buf;
 
+  h5tools_setprogname(PROGRAMNAME);
+  h5tools_setstatus(EXIT_SUCCESS);
+
   parse_command_line (argc, argv);
 
   if (nbytes == NULL)
     {
       /* missing arg */
-      error_msg (progname, "missing size\n");
-      usage (progname);
+      error_msg("missing size\n");
+      usage (h5tools_getprogname());
       exit (EXIT_FAILURE);
     }
   if (argc <= (opt_ind))
     {
-      error_msg (progname, "missing file name\n");
-      usage (progname);
+      error_msg("missing file name\n");
+      usage (h5tools_getprogname());
       exit (EXIT_FAILURE);
     }
-  filename = strdup (argv[opt_ind]);
+  filename = HDstrdup (argv[opt_ind]);
 
   size = 0;
   res = sscanf (nbytes, "%u", &size);
   if (res == EOF)
     {
       /* fail */
-      error_msg (progname, "missing file name\n");
-      usage (progname);
+      error_msg("missing file name\n");
+      usage (h5tools_getprogname());
       exit (EXIT_FAILURE);
     }
 
   fd = HDopen (filename, O_RDONLY, 0);
   if (fd < 0)
     {
-      error_msg (progname, "can't open file %s\n", filename);
+      error_msg("can't open file %s\n", filename);
       exit (EXIT_FAILURE);
     }
 
   buf = malloc ((unsigned)(size + 1));
   if (buf == NULL)
     {
-      close (fd);
+      HDclose (fd);
       exit (EXIT_FAILURE);
     }
 
@@ -158,7 +162,7 @@ main (int argc, const char *argv[])
     {
       if (buf)
 	free (buf);
-      close (fd);
+      HDclose (fd);
       exit (EXIT_FAILURE);
     }
 
@@ -166,6 +170,6 @@ main (int argc, const char *argv[])
 
   if (buf)
     free (buf);
-  close (fd);
+  HDclose (fd);
   return (EXIT_SUCCESS);
 }

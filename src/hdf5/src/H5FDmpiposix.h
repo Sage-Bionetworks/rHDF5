@@ -32,7 +32,7 @@
 /* Macros */
 
 #define IS_H5FD_MPIPOSIX(f)	/* (H5F_t *f) */				    \
-    (H5FD_MPIPOSIX==H5F_get_driver_id(f))
+    (H5FD_MPIPOSIX==H5F_DRIVER_ID(f))
 
 #ifdef H5_HAVE_PARALLEL
 
@@ -43,13 +43,8 @@ extern "C" {
 
 H5_DLL hid_t H5FD_mpiposix_init(void);
 H5_DLL void H5FD_mpiposix_term(void);
-#ifdef H5_WANT_H5_V1_4_COMPAT
-H5_DLL herr_t H5Pset_fapl_mpiposix(hid_t fapl_id, MPI_Comm comm);
-H5_DLL herr_t H5Pget_fapl_mpiposix(hid_t fapl_id, MPI_Comm *comm/*out*/);
-#else /* H5_WANT_H5_V1_4_COMPAT */
 H5_DLL herr_t H5Pset_fapl_mpiposix(hid_t fapl_id, MPI_Comm comm, hbool_t use_gpfs);
 H5_DLL herr_t H5Pget_fapl_mpiposix(hid_t fapl_id, MPI_Comm *comm/*out*/, hbool_t *use_gpfs/*out*/);
-#endif /* H5_WANT_H5_V1_4_COMPAT */
 
 #ifdef __cplusplus
 }
@@ -58,5 +53,4 @@ H5_DLL herr_t H5Pget_fapl_mpiposix(hid_t fapl_id, MPI_Comm *comm/*out*/, hbool_t
 #endif /*H5_HAVE_PARALLEL*/
 
 #endif /* __H5FDmpiposix_H */
-
 

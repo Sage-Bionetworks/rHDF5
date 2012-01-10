@@ -20,6 +20,7 @@
 
    EXTERNAL ROUTINES/VARIABLES:
      These routines are in the test directory of the C library:
+	h5_reset() -- in h5test.c, resets the library by closing it
 	h5_fileaccess() -- in h5test.c, returns a file access template
 
  ***************************************************************************/
@@ -38,7 +39,6 @@
 #endif  // H5_NO_STD
 #endif
 
-#include "testhdf5.h"	// C test header file
 #include "H5Cpp.h"	// C++ API header file
 
 #ifndef H5_NO_NAMESPACE
@@ -58,7 +58,7 @@ const H5std_string	DSET_BOGUS_NAME	("bogus");
 const int H5Z_FILTER_BOGUS = 305;
 
 // Local prototypes
-static size_t bogus(unsigned int flags, size_t cd_nelmts,
+static size_t filter_bogus(unsigned int flags, size_t cd_nelmts,
     const unsigned int *cd_values, size_t nbytes, size_t *buf_size, void **buf);
 
 
@@ -78,9 +78,10 @@ static size_t bogus(unsigned int flags, size_t cd_nelmts,
  *
  *-------------------------------------------------------------------------
  */
-static herr_t test_create( H5File& file)
+static herr_t
+test_create( H5File& file)
 {
-    TESTING("create, open, close");
+    SUBTEST("create, open, close");
 
     // Setting this to NULL for cleaning up in failure situations
     DataSet *dataset = NULL;
@@ -197,10 +198,11 @@ static herr_t test_create( H5File& file)
  *
  *-------------------------------------------------------------------------
  */
-static herr_t test_simple_io( H5File& file)
+static herr_t
+test_simple_io( H5File& file)
 {
 
-    TESTING("simple I/O");
+    SUBTEST("simple I/O");
 
     int	points[100][200];
     int	check[100][200];
@@ -281,7 +283,8 @@ static herr_t test_simple_io( H5File& file)
  *
  *-------------------------------------------------------------------------
  */
-static herr_t test_tconv( H5File& file)
+static herr_t
+test_tconv( H5File& file)
 {
     // Prepare buffers for input/output
     char	*out=NULL, *in=NULL;
@@ -290,7 +293,7 @@ static herr_t test_tconv( H5File& file)
     in = new char [4*1000000];
     //assert (in);
 
-    TESTING("data type conversion");
+    SUBTEST("data type conversion");
 
     // Initialize the dataset
     for (int i = 0; i < 1000000; i++) {
@@ -348,12 +351,14 @@ static herr_t test_tconv( H5File& file)
 }   // test_tconv
 
 /* This message derives from H5Z */
-const H5Z_class_t H5Z_BOGUS[1] = {{
+const H5Z_class2_t H5Z_BOGUS[1] = {{
+    H5Z_CLASS_T_VERS,		/* H5Z_class_t version number   */
     H5Z_FILTER_BOGUS,		/* Filter id number		*/
+    1, 1,			/* Encode and decode enabled    */
     "bogus",			/* Filter name for debugging	*/
-    NULL,		       /* The "can apply" callback     */
-    NULL,		       /* The "set local" callback     */
-    bogus,			/* The actual filter function	*/
+    NULL,                       /* The "can apply" callback     */
+    NULL,                       /* The "set local" callback     */
+    (H5Z_func_t)filter_bogus,   /* The actual filter function	*/
 }};
 
 /*-------------------------------------------------------------------------
@@ -377,7 +382,7 @@ static size_t
       const unsigned int UNUSED cd_values[], size_t nbytes,
       size_t UNUSED *buf_size, void UNUSED **buf)
 BMR: removed UNUSED for now until asking Q. or R. to pass compilation*/
-bogus(unsigned int flags, size_t cd_nelmts,
+filter_bogus(unsigned int flags, size_t cd_nelmts,
       const unsigned int cd_values[], size_t nbytes,
       size_t *buf_size, void **buf)
 {
@@ -404,10 +409,13 @@ bogus(unsigned int flags, size_t cd_nelmts,
  *
  *-------------------------------------------------------------------------
  */
-static herr_t test_compression(H5File& file)
+static herr_t
+test_compression(H5File& file)
 {
+#ifndef H5_HAVE_FILTER_DEFLATE
     const char		*not_supported;
     not_supported = "    Deflate compression is not enabled.";
+#endif /* H5_HAVE_FILTER_DEFLATE */
     int		points[100][200];
     int		check[100][200];
     hsize_t	i, j, n;
@@ -416,7 +424,7 @@ static herr_t test_compression(H5File& file)
     for (i = n = 0; i < 100; i++)
     {
 	for (j = 0; j < 200; j++) {
-	    points[i][j] = n++;
+	    points[i][j] = (int)n++;
 	}
     }
     char* tconv_buf = new char [1000];
@@ -440,7 +448,7 @@ static herr_t test_compression(H5File& file)
 	dscreatplist.setDeflate (6);
 
 #ifdef H5_HAVE_FILTER_DEFLATE
-	TESTING("compression (setup)");
+	SUBTEST("Compression (setup)");
 
 	// Create the dataset
 	dataset = new DataSet (file.createDataSet
@@ -452,7 +460,7 @@ static herr_t test_compression(H5File& file)
 	* STEP 1: Read uninitialized data.  It should be zero.
 	*----------------------------------------------------------------------
 	*/
-	TESTING("compression (uninitialized read)");
+	SUBTEST("Compression (uninitialized read)");
 
 	dataset->read ((void*) check, PredType::NATIVE_INT, DataSpace::ALL, DataSpace::ALL, xfer);
 
@@ -474,13 +482,13 @@ static herr_t test_compression(H5File& file)
 	* to it.
 	*----------------------------------------------------------------------
 	*/
-	TESTING("compression (write)");
+	SUBTEST("Compression (write)");
 
 	for (i=n=0; i<size[0]; i++)
 	{
 	    for (j=0; j<size[1]; j++)
 	    {
-		points[i][j] = n++;
+		points[i][j] = (int)n++;
 	    }
 	}
 
@@ -492,7 +500,7 @@ static herr_t test_compression(H5File& file)
 	* STEP 3: Try to read the data we just wrote.
 	*----------------------------------------------------------------------
 	*/
-	TESTING("compression (read)");
+	SUBTEST("Compression (read)");
 
 	// Read the dataset back
 	dataset->read ((void*)check, PredType::NATIVE_INT, DataSpace::ALL, DataSpace::ALL, xfer);
@@ -515,7 +523,7 @@ static herr_t test_compression(H5File& file)
 	* dataset although we rewrite the whole thing.
 	*----------------------------------------------------------------------
 	*/
-	TESTING("compression (modify)");
+	SUBTEST("Compression (modify)");
 
 	for (i=0; i<size[0]; i++)
 	{
@@ -546,7 +554,7 @@ static herr_t test_compression(H5File& file)
 	* object header.
 	*----------------------------------------------------------------------
 	*/
-	TESTING("compression (re-open)");
+	SUBTEST("Compression (re-open)");
 
 	// close this dataset to reuse the var
 	delete dataset;
@@ -572,7 +580,7 @@ static herr_t test_compression(H5File& file)
 	* boundaries (we know that case already works from above tests).
 	*----------------------------------------------------------------------
 	*/
-	TESTING("compression (partial I/O)");
+	SUBTEST("Compression (partial I/O)");
 
 	const hsize_t	hs_size[2] = {4, 50};
 	const hsize_t	hs_offset[2] = {7, 30};
@@ -608,7 +616,7 @@ static herr_t test_compression(H5File& file)
 	PASSED();
 
 #else
-	TESTING("deflate filter");
+	SUBTEST("deflate filter");
 	SKIPPED();
 	cerr << not_supported << endl;
 #endif
@@ -618,15 +626,10 @@ static herr_t test_compression(H5File& file)
 	* to write and then read the dataset.
 	*----------------------------------------------------------------------
 	*/
-	TESTING("compression (app-defined method)");
+	SUBTEST("Compression (app-defined method)");
 
-#ifdef H5_WANT_H5_V1_4_COMPAT
-	if (H5Zregister (H5Z_FILTER_BOGUS, "bogus", bogus)<0)
-	    throw Exception("test_compression", "Failed in app-defined method");
-#else /* H5_WANT_H5_V1_4_COMPAT */
-	if (H5Zregister (H5Z_BOGUS)<0)
-	    throw Exception("test_compression", "Failed in app-defined method");
-#endif /* H5_WANT_H5_V1_4_COMPAT */
+        if (H5Zregister (H5Z_BOGUS)<0)
+		throw Exception("test_compression", "Failed in app-defined method");
 	if (H5Pset_filter (dscreatplist.getId(), H5Z_FILTER_BOGUS, 0, 0, NULL)<0)
 	    throw Exception("test_compression", "Failed in app-defined method");
 	dscreatplist.setFilter (H5Z_FILTER_BOGUS, 0, 0, NULL);
@@ -691,10 +694,11 @@ static herr_t test_compression(H5File& file)
  *
  *-------------------------------------------------------------------------
  */
-static herr_t test_multiopen (H5File& file)
+static herr_t
+test_multiopen (H5File& file)
 {
 
-    TESTING("multi-open with extending");
+    SUBTEST("Multi-open with extending");
 
     DataSpace* space = NULL;
     try {
@@ -772,9 +776,10 @@ static herr_t test_multiopen (H5File& file)
  *
  *-------------------------------------------------------------------------
  */
-static herr_t test_types(H5File& file)
+static herr_t
+test_types(H5File& file)
 {
-    TESTING("various datatypes");
+    SUBTEST("Various datatypes");
 
     size_t		i;
     DataSet* dset = NULL;
@@ -945,7 +950,7 @@ static herr_t test_types(H5File& file)
 }   // test_types
 
 /*-------------------------------------------------------------------------
- * Function:	main
+ * Function:	test_dset
  *
  * Purpose:	Tests the dataset interface (H5D)
  *
@@ -966,12 +971,16 @@ static herr_t test_types(H5File& file)
  *
  *-------------------------------------------------------------------------
  */
-int main(void)
+#ifdef __cplusplus
+extern "C"
+#endif
+void test_dset()
 {
     hid_t	fapl_id;
     fapl_id = h5_fileaccess(); // in h5test.c, returns a file access template
 
     int		nerrors=0;	// keep track of number of failures occurr
+
     try
     {
 	// Turn of the auto-printing when failure occurs so that we can
@@ -998,16 +1007,12 @@ int main(void)
     }
     catch (Exception E)
     {
-	return(test_report(nerrors, H5std_string(" Dataset")));
+	test_report(nerrors, H5std_string(" Dataset"));
     }
 
     // Clean up data file
     cleanup_dsets();
-
-    // Print out dsets test results
-    cerr << endl << endl;
-    return(test_report(nerrors, H5std_string(" Dataset")));
-}   // main
+}   // test_dset
 
 /*-------------------------------------------------------------------------
  * Function:    cleanup_dsets
@@ -1025,7 +1030,7 @@ int main(void)
 #ifdef __cplusplus
 extern "C"
 #endif
-void cleanup_dsets(void)
+void cleanup_dsets()
 {
     HDremove(FILE1.c_str());
 } // cleanup_dsets

@@ -13,14 +13,33 @@
  * access to either file, you may request a copy from help@hdfgroup.org.     *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
+#ifdef H5_HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <stdlib.h>
 #include <assert.h>
 #include <math.h>
+#include <float.h>
+#include <string.h>
 
 #include "hdf5.h"
 
 /* Local macros */
+#ifdef H5_HAVE_VISUAL_STUDIO
+#define HDgetlogin()           Wgetlogin()
+#else /* H5_HAVE_VISUAL_STUDIO */
+#define HDgetlogin()            getlogin()
+#endif /* H5_HAVE_VISUAL_STUDIO */
+
+/*
+ * HDF Boolean type.
+ */
+#ifndef FALSE
+#   define FALSE 0
+#endif
+#ifndef TRUE
+#   define TRUE 1
+#endif
 
 /* defines for type of VFL driver to use */
 #define FACC_DEFAULT    0
@@ -103,13 +122,13 @@ static hid_t create_fapl(MPI_Comm comm, MPI_Info info, int acc_type )
 
     /* set parallel access with communicator, using MPI-I/O driver */
     if (acc_type == FACC_MPIO) {
-	ret = H5Pset_fapl_mpio(fapl, comm, info);
+    ret = H5Pset_fapl_mpio(fapl, comm, info);
         assert(ret>=0);
     } /* end if */
 
     /* set parallel access with communicator, using MPI-posix driver */
     if (acc_type == FACC_MPIPOSIX) {
-	ret = H5Pset_fapl_mpiposix(fapl, comm, use_gpfs);
+      ret = H5Pset_fapl_mpiposix(fapl, comm, use_gpfs);
         assert(ret>=0);
     } /* end if */
 
@@ -155,9 +174,9 @@ int main(int argc, char *argv[])
     int curr_arg;       /* Current command line argument being processed */
     int rank;           /* Number of dimensions of the dataset */
     hsize_t dim_size;   /* Dimension size of each dimension */
-    hsize_t *dims;      /* Pointer to array of dimensions */
-    hssize_t *start;    /* Pointer to array of starting locations for hyperslab selection */
-    hsize_t *count;     /* Pointer to array of counts for hyperslab selection */
+    hsize_t dims[H5S_MAX_RANK];      /* Pointer to array of dimensions */
+    hsize_t start[H5S_MAX_RANK];     /* Pointer to array of starting locations for hyperslab selection */
+    hsize_t count[H5S_MAX_RANK];     /* Pointer to array of counts for hyperslab selection */
     unsigned slice_dim; /* Dimension to slice up */
     char *file_name=NULL;    /* Name of file to put data into */
     hid_t fcpl;         /* HDF5 File creation property list ID */
@@ -300,7 +319,7 @@ int main(int argc, char *argv[])
         char *login;    /* Pointer to login name */
 
         /* Get the login name for this user */
-        login=getlogin();
+        login=HDgetlogin();
         if(login==NULL)
             login=DEFAULT_USERNAME;
 
@@ -353,8 +372,6 @@ int main(int argc, char *argv[])
         assert(ret>=0);
 
         /* Create dataspace for dataset on disk */
-        dims=malloc(sizeof(hsize_t)*rank);
-        assert(dims);
         for(i=0; i<rank; i++)
             dims[i]=dim_size;
 
@@ -374,18 +391,14 @@ int main(int argc, char *argv[])
         assert(dcpl>0);
 
         /* Create dataset */
-        dsid=H5Dcreate(fid,DEFAULT_DATASET_NAME,DEFAULT_HDF5_DATATYPE,file_sid,dcpl);
-        assert(dsid>0);
+        dsid = H5Dcreate2(fid, DEFAULT_DATASET_NAME, DEFAULT_HDF5_DATATYPE, file_sid, H5P_DEFAULT, dcpl, H5P_DEFAULT);
+        assert(dsid > 0);
 
         /* Close dataset creation property list */
         ret=H5Pclose(dcpl);
         assert(ret>=0);
 
         /* Select hyperslab for file dataspace */
-        start=malloc(sizeof(hssize_t)*rank);
-        assert(start);
-        count=malloc(sizeof(hsize_t)*rank);
-        assert(count);
         for(i=0; i<rank; i++) {
             start[i]=0;
             count[i]=dim_size;
@@ -482,12 +495,6 @@ done:
         free(file_name);
     if(buf)
         free(buf);
-    if(dims)
-        free(dims);
-    if(start)
-        free(start);
-    if(count)
-        free(count);
 
     /* MPI termination */
     MPI_Finalize();

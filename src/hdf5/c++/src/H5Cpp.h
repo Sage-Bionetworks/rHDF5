@@ -17,7 +17,6 @@
 #ifndef _H5CPP_H
 #define _H5CPP_H
 
-#include "H5cxx_pubconf.h"
 #include "H5Include.h"
 #include "H5Exception.h"
 #include "H5IdComponent.h"
@@ -47,7 +46,7 @@
 #include "H5Library.h"
 
 /* Some C++ compilers do not have offsetof macro; define to bypass the problem
-   - BMR- -EIP- 2007/06/21 
+   - BMR- -EIP- 2007/08/01
 */
 #ifndef H5_CXX_HAVE_OFFSETOF
 #ifdef HOFFSET

@@ -235,11 +235,11 @@ H5HP_sink_max(H5HP_t *heap, size_t loc)
     } /* end while */
 
     /* Put object into heap at correct location */
-    heap->heap[loc].val=val;
-    heap->heap[loc].obj=obj;
+    heap->heap[loc].val = val;
+    heap->heap[loc].obj = (H5HP_info_t *)obj;
 
     /* Update heap location for object */
-    heap->heap[loc].obj->heap_loc=loc;
+    heap->heap[loc].obj->heap_loc = loc;
 
     FUNC_LEAVE_NOAPI(ret_value);
 } /* end H5HP_sink_max() */
@@ -304,11 +304,11 @@ H5HP_sink_min(H5HP_t *heap, size_t loc)
     } /* end while */
 
     /* Put object into heap at correct location */
-    heap->heap[loc].val=val;
-    heap->heap[loc].obj=obj;
+    heap->heap[loc].val = val;
+    heap->heap[loc].obj = (H5HP_info_t *)obj;
 
     /* Update heap location for object */
-    heap->heap[loc].obj->heap_loc=loc;
+    heap->heap[loc].obj->heap_loc = loc;
 
     FUNC_LEAVE_NOAPI(ret_value);
 } /* end H5HP_sink_min() */
@@ -349,7 +349,7 @@ H5HP_create(H5HP_type_t heap_type)
         HGOTO_ERROR(H5E_HEAP,H5E_NOSPACE,NULL,"memory allocation failed");
 
     /* Allocate the array to store the heap entries */
-    if((new_heap->heap=H5FL_SEQ_MALLOC(H5HP_ent_t, H5HP_START_SIZE+1))==NULL)
+    if((new_heap->heap = H5FL_SEQ_MALLOC(H5HP_ent_t, (size_t)(H5HP_START_SIZE + 1)))==NULL)
         HGOTO_ERROR(H5E_HEAP,H5E_NOSPACE,NULL,"memory allocation failed");
 
     /* Set the internal fields */
@@ -378,11 +378,11 @@ H5HP_create(H5HP_type_t heap_type)
 
 done:
     /* Error cleanup */
-    if(ret_value==NULL) {
-        if(new_heap!=NULL) {
-            if(new_heap->heap!=NULL)
-                H5FL_SEQ_FREE(H5HP_ent_t,new_heap->heap);
-            H5FL_FREE(H5HP_t,new_heap);
+    if(NULL ==ret_value) {
+        if(NULL != new_heap) {
+            if(NULL != new_heap->heap)
+                new_heap->heap = H5FL_SEQ_FREE(H5HP_ent_t, new_heap->heap);
+            new_heap = H5FL_FREE(H5HP_t, new_heap);
         } /* end if */
     } /* end if */
 
@@ -489,9 +489,9 @@ H5HP_insert(H5HP_t *heap, int val, void *obj)
     } /* end if */
 
     /* Insert new object at end of heap */
-    heap->heap[heap->nobjs].val=val;
-    heap->heap[heap->nobjs].obj=obj;
-    heap->heap[heap->nobjs].obj->heap_loc=heap->nobjs;
+    heap->heap[heap->nobjs].val = val;
+    heap->heap[heap->nobjs].obj = (H5HP_info_t *)obj;
+    heap->heap[heap->nobjs].obj->heap_loc = heap->nobjs;
 
     /* Restore heap condition */
     if(heap->type==H5HP_MAX_HEAP) {
@@ -621,11 +621,11 @@ H5HP_remove(H5HP_t *heap, int *val, void **obj)
     /* Restore heap condition, if there are objects on the heap */
     if(heap->nobjs>0) {
         if(heap->type==H5HP_MAX_HEAP) {
-            if(H5HP_sink_max(heap,1)<0)
+            if(H5HP_sink_max(heap, (size_t)1) < 0)
                 HGOTO_ERROR(H5E_HEAP, H5E_CANTDELETE, FAIL, "unable to restore heap condition");
         } /* end if */
         else {
-            if(H5HP_sink_min(heap,1)<0)
+            if(H5HP_sink_min(heap, (size_t)1) < 0)
                 HGOTO_ERROR(H5E_HEAP, H5E_CANTDELETE, FAIL, "unable to restore heap condition");
         } /* end else */
     } /* end if */
@@ -772,20 +772,20 @@ H5HP_incr(H5HP_t *heap, unsigned amt, void *_obj)
     assert(heap->heap[0].obj==NULL);
 
     /* Get the location of the object in the heap */
-    obj_loc=obj->heap_loc;
-    assert(obj_loc>0 && obj_loc<=heap->nobjs);
+    obj_loc = obj->heap_loc;
+    assert(obj_loc > 0 && obj_loc <= heap->nobjs);
 
     /* Change the heap object's priority */
-    heap->heap[obj_loc].val+=amt;
+    heap->heap[obj_loc].val += (int)amt;
 
     /* Restore heap condition */
-    if(heap->type==H5HP_MAX_HEAP) {
-        if(H5HP_swim_max(heap,obj_loc)<0)
-            HGOTO_ERROR(H5E_HEAP, H5E_CANTRESTORE, FAIL, "unable to restore heap condition");
+    if(H5HP_MAX_HEAP == heap->type) {
+        if(H5HP_swim_max(heap, obj_loc) < 0)
+            HGOTO_ERROR(H5E_HEAP, H5E_CANTRESTORE, FAIL, "unable to restore heap condition")
     } /* end if */
     else {
-        if(H5HP_sink_min(heap,obj_loc)<0)
-            HGOTO_ERROR(H5E_HEAP, H5E_CANTRESTORE, FAIL, "unable to restore heap condition");
+        if(H5HP_sink_min(heap, obj_loc) < 0)
+            HGOTO_ERROR(H5E_HEAP, H5E_CANTRESTORE, FAIL, "unable to restore heap condition")
     } /* end else */
 
 done:
@@ -896,25 +896,25 @@ done:
 herr_t
 H5HP_close(H5HP_t *heap)
 {
-    FUNC_ENTER_NOAPI_NOFUNC(H5HP_close);
+    FUNC_ENTER_NOAPI_NOFUNC(H5HP_close)
 
     /* Check args */
-    assert(heap);
+    HDassert(heap);
 
     /* Check internal consistency */
     /* (Pre-condition) */
-    assert(heap->nobjs<heap->nalloc);
-    assert(heap->heap);
-    assert((heap->type==H5HP_MAX_HEAP && heap->heap[0].val==INT_MAX) ||
-        (heap->type==H5HP_MIN_HEAP && heap->heap[0].val==INT_MIN));
-    assert(heap->heap[0].obj==NULL);
+    HDassert(heap->nobjs < heap->nalloc);
+    HDassert(heap->heap);
+    HDassert((heap->type == H5HP_MAX_HEAP && heap->heap[0].val == INT_MAX) ||
+        (heap->type == H5HP_MIN_HEAP && heap->heap[0].val == INT_MIN));
+    HDassert(NULL == heap->heap[0].obj);
 
     /* Free internal structures for heap */
-    H5FL_SEQ_FREE(H5HP_ent_t,heap->heap);
+    heap->heap = H5FL_SEQ_FREE(H5HP_ent_t, heap->heap);
 
     /* Free actual heap object */
-    H5FL_FREE(H5HP_t,heap);
+    heap = H5FL_FREE(H5HP_t, heap);
 
-    FUNC_LEAVE_NOAPI(SUCCEED);
+    FUNC_LEAVE_NOAPI(SUCCEED)
 } /* end H5HP_close() */
 

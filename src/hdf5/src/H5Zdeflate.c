@@ -28,8 +28,11 @@
 
 #ifdef H5_HAVE_FILTER_DEFLATE
 
-#ifdef H5_HAVE_ZLIB_H
-#   include "zlib.h"
+#if defined(H5_HAVE_ZLIB_H) && !defined(H5_ZLIB_HEADER) 
+# define H5_ZLIB_HEADER "zlib.h"
+#endif
+#if defined(H5_ZLIB_HEADER)
+# include H5_ZLIB_HEADER /* "zlib.h" */
 #endif
 
 /* Local function prototypes */
@@ -37,8 +40,11 @@ static size_t H5Z_filter_deflate (unsigned flags, size_t cd_nelmts,
     const unsigned cd_values[], size_t nbytes, size_t *buf_size, void **buf);
 
 /* This message derives from H5Z */
-const H5Z_class_t H5Z_DEFLATE[1] = {{
+const H5Z_class2_t H5Z_DEFLATE[1] = {{
+    H5Z_CLASS_T_VERS,       /* H5Z_class_t version */
     H5Z_FILTER_DEFLATE,		/* Filter id number		*/
+    1,              /* encoder_present flag (set to true) */
+    1,              /* decoder_present flag (set to true) */
     "deflate",			/* Filter name for debugging	*/
     NULL,                       /* The "can apply" callback     */
     NULL,                       /* The "set local" callback     */
@@ -75,6 +81,11 @@ H5Z_filter_deflate (unsigned flags, size_t cd_nelmts,
 
     FUNC_ENTER_NOAPI(H5Z_filter_deflate, 0)
 
+    /* Sanity check */
+    HDassert(*buf_size > 0);
+    HDassert(buf);
+    HDassert(*buf);
+
     /* Check arguments */
     if (cd_nelmts!=1 || cd_values[0]>9)
 	HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, 0, "invalid deflate aggression level")
@@ -90,10 +101,10 @@ H5Z_filter_deflate (unsigned flags, size_t cd_nelmts,
 
         /* Set the uncompression parameters */
 	HDmemset(&z_strm, 0, sizeof(z_strm));
-	z_strm.next_in = *buf;
-        H5_ASSIGN_OVERFLOW(z_strm.avail_in,nbytes,size_t,uInt);
-	z_strm.next_out = outbuf;
-        H5_ASSIGN_OVERFLOW(z_strm.avail_out,nalloc,size_t,uInt);
+	z_strm.next_in = (Bytef *)*buf;
+        H5_ASSIGN_OVERFLOW(z_strm.avail_in,nbytes,size_t,unsigned);
+	z_strm.next_out = (Bytef *)outbuf;
+        H5_ASSIGN_OVERFLOW(z_strm.avail_out,nalloc,size_t,unsigned);
 
         /* Initialize the uncompression routines */
 	if (Z_OK!=inflateInit(&z_strm))
@@ -144,7 +155,7 @@ H5Z_filter_deflate (unsigned flags, size_t cd_nelmts,
 
         /* Finish uncompressing the stream */
 	(void)inflateEnd(&z_strm);
-    }
+    } /* end if */
     else {
 	/*
 	 * Output; compress but fail if the result would be larger than the
@@ -161,19 +172,20 @@ H5Z_filter_deflate (unsigned flags, size_t cd_nelmts,
         H5_ASSIGN_OVERFLOW(aggression,cd_values[0],unsigned,int);
 
         /* Allocate output (compressed) buffer */
-	if (NULL==(z_dst=outbuf=H5MM_malloc(z_dst_nbytes)))
+	if(NULL == (outbuf = H5MM_malloc(z_dst_nbytes)))
 	    HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, 0, "unable to allocate deflate destination buffer")
+        z_dst = (Bytef *)outbuf;
 
         /* Perform compression from the source to the destination buffer */
-	status = compress2 (z_dst, &z_dst_nbytes, z_src, z_src_nbytes, aggression);
+	status = compress2(z_dst, &z_dst_nbytes, z_src, z_src_nbytes, aggression);
 
         /* Check for various zlib errors */
-	if (Z_BUF_ERROR==status)
+	if(Z_BUF_ERROR == status)
 	    HGOTO_ERROR(H5E_PLINE, H5E_CANTINIT, 0, "overflow")
-	else if (Z_MEM_ERROR==status)
-	    HGOTO_ERROR (H5E_PLINE, H5E_CANTINIT, 0, "deflate memory error")
-	else if (Z_OK!=status)
-	    HGOTO_ERROR (H5E_PLINE, H5E_CANTINIT, 0, "other deflate error")
+	else if(Z_MEM_ERROR == status)
+	    HGOTO_ERROR(H5E_PLINE, H5E_CANTINIT, 0, "deflate memory error")
+	else if(Z_OK != status)
+	    HGOTO_ERROR(H5E_PLINE, H5E_CANTINIT, 0, "other deflate error")
         /* Successfully uncompressed the buffer */
         else {
             /* Free the input buffer */
@@ -184,8 +196,8 @@ H5Z_filter_deflate (unsigned flags, size_t cd_nelmts,
 	    outbuf = NULL;
 	    *buf_size = nbytes;
 	    ret_value = z_dst_nbytes;
-	}
-    }
+	} /* end else */
+    } /* end else */
 
 done:
     if(outbuf)

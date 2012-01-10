@@ -68,7 +68,7 @@ ZLIB_default=
 ZLIB=$ZLIB_default
 
 # What compression methods to use? (md5 does checksum).
-METHODS="gzip bzip2 md5"
+METHODS="gzip bzip2 md5 doc"
 
 # Use User's MAKE if set.  Else use generic make.
 MAKE=${MAKE:-make}
@@ -199,6 +199,9 @@ while [ $# -gt 0 ] ; do
 	check-vfd)
 	    CHECKVAL=check-vfd
 	    ;;
+	yodconfigure)
+	    YODCONFIGURE=yes
+	    ;;
 	--*)
 	    OP_CONFIGURE="$OP_CONFIGURE $1"
 	    ;;
@@ -284,7 +287,14 @@ fi
 # Setup the proper configure option (--with-zlib) to use zlib library
 # provide ZLIB is non-empty.
 ZLIB=${ZLIB:+"--with-zlib="$ZLIB}
-CONFIGURE="./configure $ZLIB $OP_CONFIGURE"
+if [ -n "$YODCONFIGURE" ]; then
+    cp configure configure.yod
+    bin/yodconfigure configure.yod
+    CONFIGURE="./configure.yod"
+else
+    CONFIGURE="./configure"
+fi
+CONFIGURE="$CONFIGURE $ZLIB $OP_CONFIGURE"
 
 # Execute the requests
 snapshot=yes

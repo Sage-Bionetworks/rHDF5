@@ -1,6 +1,3 @@
-#############################
-Expected output for 'h5dump tgrp_comments.h5'
-#############################
 HDF5 "tgrp_comments.h5" {
 GROUP "/" {
    GROUP "g1" {
@@ -41,6 +38,9 @@ GROUP "/" {
       GROUP "g3.4" {
          COMMENT "Comment for group /g3/g3.4"
       }
+   }
+   GROUP "glongcomment" {
+      COMMENT "Comment for group /glongcomment with a really, really, really long, long, long comment"
    }
 }
 }

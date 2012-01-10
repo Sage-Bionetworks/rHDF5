@@ -27,6 +27,7 @@
 #include "H5PropList.h"
 #include "H5private.h"		// for HDfree
 
+
 #ifndef H5_NO_NAMESPACE
 namespace H5 {
 #ifndef H5_NO_STD
@@ -65,29 +66,35 @@ PropList::PropList(const PropList& original) : IdComponent(original)
 ///\param	plist_id - IN: Id of the existing property list
 ///\exception	H5::PropListIException
 // Description
-//		This function calls H5Pcreate to create a new property list
-//		if the given id, plist_id, is that of a property class.  If
-//		the given id is equal to H5P_NO_CLASS, then set this
-//		property's id to H5P_DEFAULT, otherwise, to the given id.
-//		Note: someone else added this code without comments and this
-//		description was what I came up with from reading the code.
+//		This function creates a new property list if a property
+//		class is provided or makes a copy of a property list if one
+//		is given.  If the given id is anything else, then set this
+//		property's id to H5P_DEFAULT.
 // Programmer	Binh-Minh Ribler - 2000
 //--------------------------------------------------------------------------
 PropList::PropList( const hid_t plist_id ) : IdComponent()
 {
-    if (H5I_GENPROP_CLS == H5Iget_type(plist_id)) {
-	// call C routine to create the new property
-	id = H5Pcreate(plist_id);
-	if( id < 0 )
-	{
-	    throw PropListIException("PropList constructor", "H5Pcreate failed");
-	}
-    }
-    else {
-	if(plist_id==H5P_NO_CLASS)
-	    id=H5P_DEFAULT;
-	else
-	    id=plist_id;
+    H5I_type_t id_type = H5Iget_type(plist_id);
+    switch (id_type) {
+	case H5I_GENPROP_CLS:
+	  // call C routine to create a new property from the given prop class
+	  id = H5Pcreate(plist_id);
+	  if( id < 0 )
+	  {
+	      throw PropListIException("PropList constructor", "H5Pcreate failed");
+	  }
+	  break;
+	case H5I_GENPROP_LST:
+	  // call C routine to make a copy of the given property list
+	  id = H5Pcopy(plist_id);
+	  if( id < 0 )
+	  {
+	      throw PropListIException("PropList constructor", "H5Pcopy failed");
+	  }
+	  break;
+	default:
+	  id = H5P_DEFAULT;
+	  break;
     }
 }
 
@@ -99,7 +106,7 @@ PropList::PropList( const hid_t plist_id ) : IdComponent()
 // Programmer	Binh-Minh Ribler - 2000
 // Modification
 //		- Replaced resetIdComponent() with decRefCount() to use C
-//		library ID reference counting mechanism - BMR, Feb 20, 2005
+//		library ID reference counting mechanism - BMR, Jun 1, 2004
 //		- Replaced decRefCount with close() to let the C library
 //		handle the reference counting - BMR, Jun 1, 2006
 //--------------------------------------------------------------------------
@@ -224,10 +231,10 @@ hid_t PropList::getId() const
 
 //--------------------------------------------------------------------------
 // Function:    PropList::p_setId
-///\brief       Sets the identifier of this property list to a new value.
+///\brief       Sets the identifier of this object to a new value.
 ///
-///\exception   H5::IdComponentException when the attempt to close the
-///             currently open property list fails
+///\exception   H5::IdComponentException when the attempt to close the HDF5
+///             object fails
 // Description:
 //              The underlaying reference counting in the C library ensures
 //              that the current valid id of this object is properly closed.
@@ -243,8 +250,8 @@ void PropList::p_setId(const hid_t new_id)
     catch (Exception close_error) {
         throw PropListIException(inMemFunc("p_setId"), close_error.getDetailMsg());
     }
-    // reset object's id to the given id
-    id = new_id;
+   // reset object's id to the given id
+   id = new_id;
 }
 
 //--------------------------------------------------------------------------
@@ -263,27 +270,25 @@ void PropList::close()
 	{
 	    throw PropListIException(inMemFunc("close"), "H5Pclose failed");
 	}
-	// reset the id when the property list that it represents is no longer
-	// referenced
-	if (getCounter() == 0)
-	    id = 0;
+	// reset the id
+	id = 0;
     }
 }
 
 //--------------------------------------------------------------------------
 // Function:	PropList::getClass
 ///\brief	Returns the class of this property list, i.e. \c H5P_FILE_CREATE...
-///\return	The property list class if it is not equal to \c H5P_NO_CLASS
+///\return	The property list class if it is not equal to \c H5P_ROOT
 ///\exception	H5::PropListIException
 // Programmer	Binh-Minh Ribler - April, 2004
 //--------------------------------------------------------------------------
 hid_t PropList::getClass() const
 {
    hid_t plist_class = H5Pget_class( id );
-   if( plist_class == H5P_NO_CLASS )
+   if( plist_class == H5P_ROOT )
    {
       throw PropListIException(inMemFunc("getClass"),
-		"H5Pget_class failed - returned H5P_NO_CLASS");
+		"H5Pget_class failed - returned H5P_ROOT");
    }
    return( plist_class );
 }
@@ -671,7 +676,7 @@ PropList PropList::getClassParent() const
 // Programmer	Binh-Minh Ribler - 2000
 // Modification
 //		- Replaced resetIdComponent() with decRefCount() to use C
-//		library ID reference counting mechanism - BMR, Feb 20, 2005
+//		library ID reference counting mechanism - BMR, Jun 1, 2004
 //		- Replaced decRefCount with close() to let the C library
 //		handle the reference counting - BMR, Jun 1, 2006
 //--------------------------------------------------------------------------
@@ -681,7 +686,7 @@ PropList::~PropList()
 	close();
     }
     catch (Exception close_error) {
-	cerr << inMemFunc("~PropList - ") << close_error.getDetailMsg() << endl;
+	cerr << "PropList::~PropList - " << close_error.getDetailMsg() << endl;
     }
 }
 

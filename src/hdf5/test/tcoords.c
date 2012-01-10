@@ -18,7 +18,7 @@
 * Test program:	 tcoords
 *
 * Test the element coordinates for dataspace selection.  For
-* chunked dataset, when the hyperslab selection of some 
+* chunked dataset, when the hyperslab selection of some
 * dimensions is full, the library optimize it by "flattenning"
 * the fully selected dimensions.  This program tests if the
 * coordinates of selected elements are correctly calculated.
@@ -40,19 +40,20 @@ int da_buffer[2][3][6][2];
 
 /***********************************************************
 **
-** test_singleEnd_selElements(): Test element selection of only 
+** test_singleEnd_selElements(): Test element selection of only
 ** one block.
-** 
+**
 *************************************************************/
 static void test_singleEnd_selElements(hid_t file, hbool_t is_chunked)
 {
     hid_t sid, plid, did, msid;
     char dset_name[NAME_LEN];        /* Dataset name */
+    size_t elmts_numb;
     herr_t ret;                 /* Generic error return */
     int i, j, k;
     hsize_t da_dims[4] = { 2, 3, 6, 2 };
     hsize_t da_chunksize[4] = { 1, 3, 3, 2 };
-    
+
     /* For testing the full selection in the fastest-growing end */
     int mem1_buffer[1][1][6][2];
     hsize_t mem1_dims[4] = { 1, 1, 6, 2 };
@@ -119,7 +120,7 @@ static void test_singleEnd_selElements(hid_t file, hbool_t is_chunked)
     if(is_chunked)
         strcat(dset_name, "_chunked");
 
-    did = H5Dcreate(file, dset_name, H5T_NATIVE_INT, sid, plid);
+    did = H5Dcreate2(file, dset_name, H5T_NATIVE_INT, sid, H5P_DEFAULT, plid, H5P_DEFAULT);
     CHECK(did, FAIL, "H5Dcreate2");
 
     /* Initialize the data to be written to file */
@@ -138,14 +139,16 @@ static void test_singleEnd_selElements(hid_t file, hbool_t is_chunked)
     ret = H5Dclose(did);
     CHECK(ret, FAIL, "H5Dclose");
 
-  
+
     /* ****** Case 1: ******
      * Testing the full selection in the fastest-growing end */
-    did = H5Dopen(file, dset_name);
+    did = H5Dopen2(file, dset_name, H5P_DEFAULT);
     CHECK(did, FAIL, "H5Dopen");
 
     /* Select the elements in the dataset */
-    ret = H5Sselect_elements(sid, H5S_SELECT_SET, (const size_t)12, da_elmts1);
+    elmts_numb = 12;
+
+    ret = H5Sselect_elements(sid, H5S_SELECT_SET, elmts_numb, (const hsize_t *)da_elmts1);
     CHECK(ret, FAIL, "H5Sselect_elements");
 
     /* Dataspace for memory buffer */
@@ -167,16 +170,18 @@ static void test_singleEnd_selElements(hid_t file, hbool_t is_chunked)
     for(i=0; i<6; i++)
         for(j=0; j<2; j++)
             if(da_buffer[0][0][i][j] != mem1_buffer[0][0][i][j]) {
-                TestErrPrintf("Read different values than written at index 0,0,%d,%d\n", i, j);
+                TestErrPrintf("%u: Read different values than written at index 0,0,%d,%d\n", __LINE__, i, j);
             }
 
     /* ****** Case 2: ******
      * Testing the full selection in the slowest-growing end */
-    did = H5Dopen(file, dset_name);
+    did = H5Dopen2(file, dset_name, H5P_DEFAULT);
     CHECK(did, FAIL, "H5Dopen");
 
     /* Select the elements in the dataset */
-    ret = H5Sselect_elements(sid, H5S_SELECT_SET, (const size_t)6, da_elmts2);
+    elmts_numb = 6;
+
+    ret = H5Sselect_elements(sid, H5S_SELECT_SET, elmts_numb, (const hsize_t *)da_elmts2);
     CHECK(ret, FAIL, "H5Sselect_elements");
 
     /* Dataspace for memory buffer */
@@ -198,16 +203,18 @@ static void test_singleEnd_selElements(hid_t file, hbool_t is_chunked)
     for(i=0; i<2; i++)
         for(j=0; j<3; j++)
             if(da_buffer[i][j][0][0] != mem2_buffer[i][j][0][0]) {
-                TestErrPrintf("Read different values than written at index %d,%d,0,0\n", i, j);
+                TestErrPrintf("%u: Read different values than written at index %d,%d,0,0, da_buffer = %d, mem2_buffer = %d\n", __LINE__, i, j, da_buffer[i][j][0][0], mem2_buffer[i][j][0][0]);
             }
 
     /* ****** Case 3: ******
      * Testing the full selection in the middle dimensions */
-    did = H5Dopen(file, dset_name);
+    did = H5Dopen2(file, dset_name, H5P_DEFAULT);
     CHECK(did, FAIL, "H5Dopen");
 
     /* Select the elements in the dataset */
-    ret = H5Sselect_elements(sid, H5S_SELECT_SET, (const size_t)18, da_elmts3);
+    elmts_numb = 18;
+
+    ret = H5Sselect_elements(sid, H5S_SELECT_SET, elmts_numb, (const hsize_t *)da_elmts3);
     CHECK(ret, FAIL, "H5Sselect_elements");
 
     /* Dataspace for memory buffer */
@@ -229,7 +236,7 @@ static void test_singleEnd_selElements(hid_t file, hbool_t is_chunked)
     for(i=0; i<3; i++)
         for(j=0; j<6; j++)
             if(da_buffer[0][i][j][0] != mem3_buffer[0][i][j][0]) {
-                TestErrPrintf("Read different values than written at index 0,%d,%d,0\n", i, j);
+                TestErrPrintf("%u: Read different values than written at index 0,%d,%d,0\n", __LINE__, i, j);
             }
 
 
@@ -244,7 +251,7 @@ static void test_singleEnd_selElements(hid_t file, hbool_t is_chunked)
 **
 ** test_singleEnd_selHyperslab(): Test full hyperslab selection
 ** of only one block.
-** 
+**
 *************************************************************/
 static void test_singleEnd_selHyperslab(hid_t file, hbool_t is_chunked)
 {
@@ -279,7 +286,7 @@ static void test_singleEnd_selHyperslab(hid_t file, hbool_t is_chunked)
     hsize_t mem3_block[4] = { 1, 3, 6, 1 };
 
     /* Construct dataset's name */
-    memset(dset_name, 0, (size_t)NAME_LEN);
+    memset(dset_name, 0, NAME_LEN);
     strcat(dset_name, SINGLE_END_DSET);
     if(is_chunked)
         strcat(dset_name, "_chunked");
@@ -290,7 +297,7 @@ static void test_singleEnd_selHyperslab(hid_t file, hbool_t is_chunked)
 
     /* ****** Case 1: ******
      * Testing the full selection in the fastest-growing end */
-    did = H5Dopen(file, dset_name);
+    did = H5Dopen2(file, dset_name, H5P_DEFAULT);
     CHECK(did, FAIL, "H5Dopen");
 
     /* Select the elements in the dataset */
@@ -316,12 +323,12 @@ static void test_singleEnd_selHyperslab(hid_t file, hbool_t is_chunked)
     for(i=0; i<6; i++)
         for(j=0; j<2; j++)
             if(da_buffer[0][0][i][j] != mem1_buffer[0][0][i][j]) {
-                TestErrPrintf("Read different values than written at index 0,0,%d,%d\n", i, j);
+                TestErrPrintf("%u: Read different values than written at index 0,0,%d,%d\n", __LINE__, i, j);
             }
 
     /* ****** Case 2: ******
      * Testing the full selection in the slowest-growing end */
-    did = H5Dopen(file, dset_name);
+    did = H5Dopen2(file, dset_name, H5P_DEFAULT);
     CHECK(did, FAIL, "H5Dopen");
 
     /* Select the elements in the dataset */
@@ -347,12 +354,12 @@ static void test_singleEnd_selHyperslab(hid_t file, hbool_t is_chunked)
     for(i=0; i<2; i++)
         for(j=0; j<3; j++)
             if(da_buffer[i][j][0][0] != mem2_buffer[i][j][0][0]) {
-                TestErrPrintf("Read different values than written at index %d,%d,0,0\n", i, j);
+                TestErrPrintf("%u: Read different values than written at index %d,%d,0,0\n", __LINE__, i, j);
             }
 
     /* ****** Case 3: ******
      * Testing the full selection in the middle dimensions */
-    did = H5Dopen(file, dset_name);
+    did = H5Dopen2(file, dset_name, H5P_DEFAULT);
     CHECK(did, FAIL, "H5Dopen");
 
     /* Select the elements in the dataset */
@@ -378,7 +385,7 @@ static void test_singleEnd_selHyperslab(hid_t file, hbool_t is_chunked)
     for(i=0; i<3; i++)
         for(j=0; j<6; j++)
             if(da_buffer[0][i][j][0] != mem3_buffer[0][i][j][0]) {
-                TestErrPrintf("Read different values than written at index 0,%d,%d,0\n", i, j);
+                TestErrPrintf("%u: Read different values than written at index 0,%d,%d,0\n", __LINE__, i, j);
             }
 
 
@@ -390,9 +397,9 @@ static void test_singleEnd_selHyperslab(hid_t file, hbool_t is_chunked)
 
 /***********************************************************
 **
-** test_multiple_end(): Test full hyperslab selection of 
+** test_multiple_end(): Test full hyperslab selection of
 ** multiple blocks.
-** 
+**
 *************************************************************/
 static void test_multiple_ends(hid_t file, hbool_t is_chunked)
 {
@@ -458,12 +465,12 @@ static void test_multiple_ends(hid_t file, hbool_t is_chunked)
     }
 
     /* Construct dataset's name */
-    memset(dset_name, 0, (size_t)NAME_LEN);
+    memset(dset_name, 0, NAME_LEN);
     strcat(dset_name, MULTI_ENDS_SEL_HYPER_DSET);
     if(is_chunked)
         strcat(dset_name, "_chunked");
 
-    did = H5Dcreate(file, dset_name, H5T_NATIVE_INT, sid, plid);
+    did = H5Dcreate2(file, dset_name, H5T_NATIVE_INT, sid, H5P_DEFAULT, plid, H5P_DEFAULT);
     CHECK(did, FAIL, "H5Dcreate2");
 
     for(i=0; i<4; i++)
@@ -472,7 +479,7 @@ static void test_multiple_ends(hid_t file, hbool_t is_chunked)
                 for(l=0; l<4; l++)
                     for(m=0; m<2; m++)
                         for(n=0; n<3; n++)
-                            for(p=0; p<6; p++) {                
+                            for(p=0; p<6; p++) {
                                 data_buf[i][j][k][l][m][n][p][0] = i*1000000 + j*100000 + k*10000 + l*1000 + m*100 + n*10 + p;
                                 data_buf[i][j][k][l][m][n][p][1] = i*1000000 + j*100000 + k*10000 + l*1000 + m*100 + n*10 + p + 1;
                             }
@@ -485,7 +492,7 @@ static void test_multiple_ends(hid_t file, hbool_t is_chunked)
 
     /* ****** Case 1: ******
      * Testing the full selections in the fastest-growing end and in the middle dimensions*/
-    did = H5Dopen(file, dset_name);
+    did = H5Dopen2(file, dset_name, H5P_DEFAULT);
     CHECK(did, FAIL, "H5Dopen");
 
     /* Select the elements in the dataset */
@@ -512,12 +519,12 @@ static void test_multiple_ends(hid_t file, hbool_t is_chunked)
             for(k=0; k<6; k++)
                 for(l=0; l<2; l++)
                     if(data_buf[0][0][0][i][j][0][k][l] != mem1_buffer[0][0][0][i][j][0][k][l]) {
-                        TestErrPrintf("Read different values than written at index 0,0,0,%d,%d,0,%d,%d\n", i, j, k, l);
+                        TestErrPrintf("%u: Read different values than written at index 0,0,0,%d,%d,0,%d,%d\n", __LINE__, i, j, k, l);
                     }
 
     /* ****** Case 2: ******
      * Testing the full selections in the slowest-growing end and in the middle dimensions*/
-    did = H5Dopen(file, dset_name);
+    did = H5Dopen2(file, dset_name, H5P_DEFAULT);
     CHECK(did, FAIL, "H5Dopen");
 
     /* Select the elements in the dataset */
@@ -544,12 +551,12 @@ static void test_multiple_ends(hid_t file, hbool_t is_chunked)
             for(k=0; k<4; k++)
                 for(l=0; l<2; l++)
                     if(data_buf[i][j][0][k][l][0][0][0] != mem2_buffer[i][j][0][k][l][0][0][0]) {
-                        TestErrPrintf("Read different values than written at index %d,%d,0,%d,%d,0,0,0\n", i, j, k, l);
+                        TestErrPrintf("%u: Read different values than written at index %d,%d,0,%d,%d,0,0,0\n", __LINE__, i, j, k, l);
                     }
 
     /* ****** Case 3: ******
      * Testing two unadjacent full selections in the middle dimensions */
-    did = H5Dopen(file, dset_name);
+    did = H5Dopen2(file, dset_name, H5P_DEFAULT);
     CHECK(did, FAIL, "H5Dopen");
 
     /* Select the elements in the dataset */
@@ -576,12 +583,12 @@ static void test_multiple_ends(hid_t file, hbool_t is_chunked)
             for(k=0; k<3; k++)
                 for(l=0; l<6; l++)
                     if(data_buf[0][i][j][0][0][k][l][0] != mem3_buffer[0][i][j][0][0][k][l][0]) {
-                        TestErrPrintf("Read different values than written at index 0,%d,%d,0,0,%d,%d,0\n", i, j, k, l);
+                        TestErrPrintf("%u: Read different values than written at index 0,%d,%d,0,0,%d,%d,0\n", __LINE__, i, j, k, l);
                     }
 
     /* ****** Case 4: ******
      * Testing the full selections in the fastest-growing end and the slowest-growing end */
-    did = H5Dopen(file, dset_name);
+    did = H5Dopen2(file, dset_name, H5P_DEFAULT);
     CHECK(did, FAIL, "H5Dopen");
 
     /* Select the elements in the dataset */
@@ -608,14 +615,14 @@ static void test_multiple_ends(hid_t file, hbool_t is_chunked)
             for(k=0; k<6; k++)
                 for(l=0; l<2; l++)
                     if(data_buf[i][j][0][0][0][0][k][l] != mem4_buffer[i][j][0][0][0][0][k][l]) {
-                        TestErrPrintf("Read different values than written at index %d,%d,0,0,0,0,%d,%d\n", i, j, k, l);
+                        TestErrPrintf("%u: Read different values than written at index %d,%d,0,0,0,0,%d,%d\n", __LINE__, i, j, k, l);
                     }
 
 
     /* ****** Case 5: ******
-     * Testing the full selections in the fastest-growing end and the slowest-growing end, 
+     * Testing the full selections in the fastest-growing end and the slowest-growing end,
      * and also in the middle dimensions */
-    did = H5Dopen(file, dset_name);
+    did = H5Dopen2(file, dset_name, H5P_DEFAULT);
     CHECK(did, FAIL, "H5Dopen");
 
     /* Select the elements in the dataset */
@@ -644,7 +651,7 @@ static void test_multiple_ends(hid_t file, hbool_t is_chunked)
                     for(m=0; m<6; m++)
                         for(n=0; n<2; n++)
                             if(data_buf[i][j][0][k][l][0][m][n] != mem5_buffer[i][j][0][k][l][0][m][n]) {
-                                TestErrPrintf("Read different values than written at index %d,%d,0,%d,%d,0,%d,%d\n", i, j, k, l, m, n);
+                                TestErrPrintf("%u: Read different values than written at index %d,%d,0,%d,%d,0,%d,%d\n", __LINE__, i, j, k, l, m, n);
                             }
 
 

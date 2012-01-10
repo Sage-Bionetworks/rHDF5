@@ -75,24 +75,24 @@ const char *FILENAME[] = {
 static int
 test_1 (hid_t fapl)
 {
-    hid_t	file=-1;
-    H5F_t 	*f=NULL;
+    hid_t	file = -1;
+    H5F_t 	*f = NULL;
     H5HG_t	obj[1024];
     uint8_t	out[1024];
     uint8_t	in[1024];
     int		i;
     size_t	size;
     herr_t	status;
-    int		nerrors=0;
+    int		nerrors = 0;
     char	filename[1024];
 
     TESTING("monotonically increasing lengths");
 
     /* Open a clean file */
     h5_fixname(FILENAME[0], fapl, filename, sizeof filename);
-    if ((file=H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, fapl))<0)
+    if((file = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, fapl)) < 0)
 	goto error;
-    if (NULL==(f=H5I_object(file))) {
+    if(NULL == (f = (H5F_t *)H5I_object(file))) {
 	H5_FAILED();
 	puts("    Unable to create file");
 	goto error;
@@ -103,16 +103,16 @@ test_1 (hid_t fapl)
      * a clean file, the addresses allocated for the collections should also
      * be monotonically increasing.
      */
-    for (i=0; i<1024; i++) {
-	size = i+1;
-	memset (out, 'A'+i%26, size);
-	H5Eclear ();
-	status = H5HG_insert (f, H5P_DATASET_XFER_DEFAULT, size, out, obj+i);
-	if (status<0) {
+    for(i = 0; i < 1024; i++) {
+	size = i + 1;
+	HDmemset(out, 'A' + i % 26, size);
+	H5Eclear2(H5E_DEFAULT);
+	status = H5HG_insert(f, H5P_DATASET_XFER_DEFAULT, size, out, obj + i);
+	if(status < 0) {
 	    H5_FAILED();
 	    puts("    Unable to insert object into global heap");
 	    nerrors++;
-	} else if (i && H5F_addr_gt (obj[i-1].addr, obj[i].addr)) {
+	} else if(i && H5F_addr_gt(obj[i - 1].addr, obj[i].addr)) {
 	    H5_FAILED();
 	    puts("    Collection addresses are not monotonically increasing");
 	    nerrors++;
@@ -122,27 +122,28 @@ test_1 (hid_t fapl)
     /*
      * Now try to read each object back.
      */
-    for (i=0; i<1024; i++) {
-	size = i+1;
-	memset (out, 'A'+i%26, size);
-	H5Eclear ();
-	if (NULL==H5HG_read (f, H5P_DATASET_XFER_DEFAULT, obj+i, in)) {
+    for(i = 0; i < 1024; i++) {
+	size = i + 1;
+	HDmemset(out, 'A' + i % 26, size);
+	H5Eclear2(H5E_DEFAULT);
+	if(NULL == H5HG_read(f, H5P_DATASET_XFER_DEFAULT, obj + i, in, NULL)) {
 	    H5_FAILED();
 	    puts("    Unable to read object");
 	    nerrors++;
-	} else if (memcmp (in, out, size)) {
+	} else if(HDmemcmp(in, out, size)) {
 	    H5_FAILED();
 	    puts("    Value read doesn't match value written");
 	    nerrors++;
 	}
     }
 
-    if (H5Fclose(file)<0) goto error;
-    if (nerrors) goto error;
+    if(H5Fclose(file) < 0) goto error;
+    if(nerrors) goto error;
+
     PASSED();
     return 0;
 
- error:
+error:
     H5E_BEGIN_TRY {
 	H5Fclose(file);
     } H5E_END_TRY;
@@ -170,23 +171,23 @@ test_1 (hid_t fapl)
 static int
 test_2 (hid_t fapl)
 {
-    hid_t	file=-1;
-    H5F_t 	*f=NULL;
+    hid_t	file = -1;
+    H5F_t 	*f = NULL;
     H5HG_t	obj[1024];
     uint8_t	out[1024];
     uint8_t	in[1024];
     int		i;
     size_t	size;
-    int		nerrors=0;
+    int		nerrors = 0;
     char	filename[1024];
 
     TESTING("monotonically decreasing lengths");
 
     /* Open a clean file */
     h5_fixname(FILENAME[1], fapl, filename, sizeof filename);
-    if ((file=H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, fapl))<0)
+    if((file = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, fapl)) < 0)
 	goto error;
-    if (NULL==(f=H5I_object(file))) {
+    if(NULL == (f = (H5F_t *)H5I_object(file))) {
 	H5_FAILED();
 	puts("    Unable to create file");
 	goto error;
@@ -198,7 +199,7 @@ test_2 (hid_t fapl)
     for (i=0; i<1024; i++) {
 	size = 1024-i;
 	memset (out, 'A'+i%26, size);
-	H5Eclear ();
+	H5Eclear2(H5E_DEFAULT);
 	if (H5HG_insert (f, H5P_DATASET_XFER_DEFAULT, size, out, obj+i)<0) {
 	    H5_FAILED();
 	    puts("    Unable to insert object into global heap");
@@ -212,8 +213,8 @@ test_2 (hid_t fapl)
     for (i=0; i<1024; i++) {
 	size = 1024-i;
 	memset (out, 'A'+i%26, size);
-	H5Eclear ();
-	if (NULL==H5HG_read (f, H5P_DATASET_XFER_DEFAULT, obj+i, in)) {
+	H5Eclear2(H5E_DEFAULT);
+	if (NULL==H5HG_read (f, H5P_DATASET_XFER_DEFAULT, obj+i, in, NULL)) {
 	    H5_FAILED();
 	    puts("    Unable to read object");
 	    nerrors++;
@@ -257,23 +258,23 @@ test_2 (hid_t fapl)
 static int
 test_3 (hid_t fapl)
 {
-    hid_t	file=-1;
-    H5F_t 	*f=NULL;
+    hid_t	file = -1;
+    H5F_t 	*f = NULL;
     H5HG_t	obj[1024];
     uint8_t	out[1024];
     int		i;
     size_t	size;
     herr_t	status;
-    int		nerrors=0;
+    int		nerrors = 0;
     char	filename[1024];
 
     TESTING("complete object removal");
 
     /* Open a clean file */
     h5_fixname(FILENAME[2], fapl, filename, sizeof filename);
-    if ((file=H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, fapl))<0)
+    if((file = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, fapl)) < 0)
 	goto error;
-    if (NULL==(f=H5I_object(file))) {
+    if(NULL == (f = (H5F_t *)H5I_object(file))) {
 	H5_FAILED();
 	puts("    Unable to create file");
 	goto error;
@@ -283,7 +284,7 @@ test_3 (hid_t fapl)
     for (i=0; i<1024; i++) {
 	size = i%30+100;
 	memset (out, 'A'+i%26, size);
-	H5Eclear ();
+	H5Eclear2(H5E_DEFAULT);
 	status = H5HG_insert (f, H5P_DATASET_XFER_DEFAULT, size, out, obj+i);
 	if (status<0) {
 	    H5_FAILED();
@@ -336,23 +337,23 @@ test_3 (hid_t fapl)
 static int
 test_4 (hid_t fapl)
 {
-    hid_t	file=-1;
-    H5F_t 	*f=NULL;
+    hid_t	file = -1;
+    H5F_t 	*f = NULL;
     H5HG_t	obj[1024];
     uint8_t	out[1024];
     int		i;
     size_t	size;
     herr_t	status;
-    int		nerrors=0;
+    int		nerrors = 0;
     char	filename[1024];
 
     TESTING("partial object removal");
 
     /* Open a clean file */
     h5_fixname(FILENAME[3], fapl, filename, sizeof filename);
-    if ((file=H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, fapl))<0)
+    if((file = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, fapl)) < 0)
 	goto error;
-    if (NULL==(f=H5I_object(file))) {
+    if(NULL == (f = (H5F_t *)H5I_object(file))) {
 	H5_FAILED();
 	puts("    Unable to create file");
 	goto error;
@@ -362,7 +363,7 @@ test_4 (hid_t fapl)
 	/* Insert */
 	size = i%30+100;
 	memset (out, 'A'+i%26, size);
-	H5Eclear ();
+	H5Eclear2(H5E_DEFAULT);
 	status = H5HG_insert (f, H5P_DATASET_XFER_DEFAULT, size, out, obj+i);
 	if (status<0) {
 	    H5_FAILED();
@@ -376,7 +377,7 @@ test_4 (hid_t fapl)
 	 * remove B, insert D, E, F; remove E; etc.
 	 */
 	if (1==i%3) {
-	    H5Eclear ();
+	    H5Eclear2(H5E_DEFAULT);
 	    status = H5HG_remove (f, H5P_DATASET_XFER_DEFAULT, obj+i-1);
 	    if (status<0) {
 		H5_FAILED();
@@ -452,7 +453,7 @@ test_ooo_indices(hid_t fapl)
          * and down by 1000 so the previous set of insertions is preserved and
          * can be deleted. */
         for(j=1000*((~i&1)); j<1000*((~i&1)+1); j++) {
-            H5Eclear();
+            H5Eclear2(H5E_DEFAULT);
             status = H5HG_insert(f, H5P_DATASET_XFER_DEFAULT, sizeof(j), &j, &obj[j]);
             if (status<0)
                 GHEAP_REPEATED_ERR("    Unable to insert object into global heap")
@@ -465,7 +466,7 @@ test_ooo_indices(hid_t fapl)
         /* Remove the previous 1000 entries */
         if(i>0)
             for(j=1000*(i&1); j<1000*((i&1)+1); j++) {
-                H5Eclear();
+                H5Eclear2(H5E_DEFAULT);
                 status = H5HG_remove(f, H5P_DATASET_XFER_DEFAULT, &obj[j]);
                 if (status<0)
                     GHEAP_REPEATED_ERR("    Unable to remove object from global heap");
@@ -488,7 +489,7 @@ test_ooo_indices(hid_t fapl)
 
     /* Read the objects to make sure the heap is still readable */
     for(i=0; i<1000; i++) {
-        if(NULL == H5HG_read(f, H5P_DATASET_XFER_DEFAULT, &obj[i], &j))
+        if(NULL == H5HG_read(f, H5P_DATASET_XFER_DEFAULT, &obj[i], &j, NULL))
             goto error;
         if(i != j) {
             H5_FAILED();
@@ -544,6 +545,10 @@ main (void)
     nerrors += test_3(fapl);
     nerrors += test_4(fapl);
     nerrors += test_ooo_indices(fapl);
+
+    /* Verify symbol table messages are cached */
+    nerrors += (h5_verify_cached_stabs(FILENAME, fapl) < 0 ? 1 : 0);
+
     if (nerrors) goto error;
 
     puts("All global heap tests passed.");

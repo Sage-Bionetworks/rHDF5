@@ -53,14 +53,14 @@ main(int argv , char *argc[])
     {
         print_version("gif2h5");
         exit(EXIT_SUCCESS);
-        
+
     }
 
     if (argv < 3) {
         printf("Usage: gif2h5 <GIFFILE> <HDFFILE>\n");
         fprintf(stdout, "       gif2h5 -V \n");
         fprintf(stdout, "        Print HDF5 library version and exit\n");
-        return(-1);
+        exit(EXIT_FAILURE);
     }
 
     GIFFileName = argc[1];
@@ -68,7 +68,7 @@ main(int argv , char *argc[])
 
     if (!(fpGif = fopen(GIFFileName,"rb"))) {
         printf("Unable to open GIF file for reading.\n");
-        exit(-1);
+        exit(EXIT_FAILURE);
     }
 
     /* Get the whole file into memory. Mem's much faster than I/O */
@@ -81,12 +81,12 @@ main(int argv , char *argc[])
 
     if (!(MemGif = StartPos = (BYTE *)malloc((size_t)filesize))) {
         printf("Out of memory");
-        exit (-1);
+        exit(EXIT_FAILURE);
     }
 
     if (fread(MemGif,(size_t)filesize,1,fpGif) != 1) {
         printf("Corrupted Input File");
-        exit(-1);
+        exit(EXIT_FAILURE);
     }
 
     fseek(fpGif,0L,0);
@@ -99,7 +99,7 @@ main(int argv , char *argc[])
 
     if (ferror(fpGif)) {
             printf("File Stream Error\n\n");
-            exit(-1);
+            exit(EXIT_FAILURE);
     }
 
     fclose(fpGif);
@@ -108,7 +108,7 @@ main(int argv , char *argc[])
      * Call WriteHDF from here. Go ahead and change WriteHDF to write whatever
      * format you want
      */
-    if (WriteHDF(GifMemoryStruct , HDFFileName , GIFFileName))
+    if (WriteHDF(GifMemoryStruct , HDFFileName))
         printf("HDF Write Error\n\n");
 
     /* Free all buffers */
@@ -120,7 +120,7 @@ main(int argv , char *argc[])
 
         if (gifImageDesc.Image != NULL)
             free(gifImageDesc.Image);
-        
+
         if (GifMemoryStruct.GifImageDesc[i] != NULL)
         {
             free(GifMemoryStruct.GifImageDesc[i]);
@@ -157,5 +157,5 @@ main(int argv , char *argc[])
     }
 
 
-    return 0;
+    return EXIT_SUCCESS;
 }

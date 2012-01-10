@@ -55,25 +55,25 @@ H5FL_DEFINE_STATIC(H5RC_t);
 H5RC_t *
 H5RC_create(void *o, H5RC_free_func_t free_func)
 {
-    H5RC_t *ret_value=NULL;   /* Return value */
+    H5RC_t *ret_value;   /* Return value */
 
-    FUNC_ENTER_NOAPI(H5RC_create,NULL);
+    FUNC_ENTER_NOAPI(H5RC_create, NULL)
 
     /* Sanity check */
     HDassert(o);
     HDassert(free_func);
 
     /* Allocate ref-counted string structure */
-    if((ret_value=H5FL_MALLOC(H5RC_t))==NULL)
-        HGOTO_ERROR(H5E_RS,H5E_NOSPACE,NULL,"memory allocation failed");
+    if(NULL == (ret_value = H5FL_MALLOC(H5RC_t)))
+        HGOTO_ERROR(H5E_RS,H5E_NOSPACE,NULL,"memory allocation failed")
 
     /* Set the internal fields */
-    ret_value->o=o;
-    ret_value->n=1;
-    ret_value->free_func=free_func;
+    ret_value->o = o;
+    ret_value->n = 1;
+    ret_value->free_func = free_func;
 
 done:
-    FUNC_LEAVE_NOAPI(ret_value);
+    FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5RC_create() */
 
 
@@ -99,29 +99,29 @@ done:
 herr_t
 H5RC_decr(H5RC_t *rc)
 {
-    herr_t ret_value=SUCCEED;   /* Return value */
+    herr_t ret_value = SUCCEED;   /* Return value */
 
-    FUNC_ENTER_NOAPI(H5RC_decr,FAIL);
+    FUNC_ENTER_NOAPI(H5RC_decr, FAIL)
 
     /* Sanity check */
     HDassert(rc);
     HDassert(rc->o);
-    HDassert(rc->n>0);
+    HDassert(rc->n > 0);
     HDassert(rc->free_func);
 
     /* Decrement reference count */
     rc->n--;
 
     /* Check if we should delete this object now */
-    if(rc->n==0) {
-        if((rc->free_func)(rc->o)<0) {
-            H5FL_FREE(H5RC_t,rc);
-            HGOTO_ERROR(H5E_RS,H5E_CANTFREE,FAIL,"memory release failed");
+    if(rc->n == 0) {
+        if((rc->free_func)(rc->o) < 0) {
+            rc = H5FL_FREE(H5RC_t, rc);
+            HGOTO_ERROR(H5E_RS, H5E_CANTFREE, FAIL, "memory release failed")
         } /* end if */
-        H5FL_FREE(H5RC_t,rc);
+        rc = H5FL_FREE(H5RC_t, rc);
     } /* end if */
 
 done:
-    FUNC_LEAVE_NOAPI(ret_value);
+    FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5RC_decr() */
 

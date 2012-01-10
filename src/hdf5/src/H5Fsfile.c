@@ -42,7 +42,7 @@ H5F_sfile_node_t *H5F_sfile_head_g = NULL;
 
 
 /*-------------------------------------------------------------------------
- * Function:	H5F_sfile_assert_empty
+ * Function:	H5F_sfile_assert_num
  *
  * Purpose:	Sanity checking that shared file list is empty
  *
@@ -83,7 +83,7 @@ H5F_sfile_assert_num(unsigned n)
         HDassert(count == n);
     } /* end else */
 
-    FUNC_LEAVE_NOAPI(SUCCEED);
+    FUNC_LEAVE_NOAPI(SUCCEED)
 } /* H5F_sfile_assert_num() */
 
 
@@ -219,7 +219,7 @@ H5F_sfile_remove(H5F_file_t *shared)
 
     /* Release the shared file node struct */
     /* (the shared file info itself is freed elsewhere) */
-    H5FL_FREE(H5F_sfile_node_t, curr);
+    curr = H5FL_FREE(H5F_sfile_node_t, curr);
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)

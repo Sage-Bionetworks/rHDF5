@@ -46,6 +46,8 @@
 #define S_SIMPLE        "SIMPLE"
 #define S_NULL          "NULL"
 #define SOFTLINK        "SOFTLINK"
+#define EXTLINK         "EXTERNAL_LINK"
+#define UDLINK          "USERDEFINED_LINK"
 #define START           "START"
 #define STRIDE          "STRIDE"
 #define STRSIZE         "STRSIZE"
@@ -67,6 +69,9 @@
 #define EXTERNAL_FILE   "EXTERNAL_FILE"
 #define FILLVALUE       "FILLVALUE"
 #define FILE_CONTENTS   "FILE_CONTENTS"
+#define PACKED_BITS     "PACKED_BITS"
+#define PACKED_OFFSET   "OFFSET"
+#define PACKED_LENGTH   "LENGTH"
 
 #define BEGIN           "{"
 #define END             "}"
@@ -91,6 +96,10 @@ typedef struct h5dump_header_t {
     const char *dataend;
     const char *softlinkbegin;
     const char *softlinkend;
+    const char *extlinkbegin;
+    const char *extlinkend;
+    const char *udlinkbegin;
+    const char *udlinkend;
     const char *subsettingbegin;
     const char *subsettingend;
     const char *startbegin;
@@ -120,6 +129,10 @@ typedef struct h5dump_header_t {
     const char *datablockend;
     const char *softlinkblockbegin;
     const char *softlinkblockend;
+    const char *extlinkblockbegin;
+    const char *extlinkblockend;
+    const char *udlinkblockbegin;
+    const char *udlinkblockend;
     const char *strblockbegin;
     const char *strblockend;
     const char *enumblockbegin;

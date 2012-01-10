@@ -1,4 +1,4 @@
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * Copyright by The HDF Group.                                               *
  * Copyright by the Board of Trustees of the University of Illinois.         *
  * All rights reserved.                                                      *
@@ -13,12 +13,8 @@
  * access to either file, you may request a copy from help@hdfgroup.org.     *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include <stdlib.h>
-#include <string.h>
 #include "h5repack.h"
 #include "h5tools_utils.h"
-
-extern char  *progname;
 
 /*-------------------------------------------------------------------------
  * Function: init_packobject
@@ -29,14 +25,15 @@ extern char  *progname;
  *
  *-------------------------------------------------------------------------
  */
+
 void init_packobject(pack_info_t *obj)
 {
     int j, k;
-    
-    strcpy(obj->path,"\0");
+
+    HDstrcpy(obj->path,"\0");
     for ( j=0; j<H5_REPACK_MAX_NFILTERS; j++)
     {
-        obj->filter[j].filtn		  = -1;
+        obj->filter[j].filtn        = -1;
         for ( k=0; k<CD_VALUES; k++)
             obj->filter[j].cd_values[k] = 0;
     }
@@ -66,7 +63,7 @@ static void aux_tblinsert_filter(pack_opttbl_t *table,
     }
     else
     {
-    error_msg(progname, "cannot insert the filter in this object.\
+    error_msg("cannot insert the filter in this object.\
         Maximum capacity exceeded\n");
     }
 }
@@ -86,7 +83,7 @@ static void aux_tblinsert_layout(pack_opttbl_t *table,
                                  pack_info_t *pack)
 {
     int k;
-    
+
     table->objs[I].layout = pack->layout;
     if (H5D_CHUNKED==pack->layout)
     {
@@ -121,11 +118,11 @@ static void aux_tblinsert_layout(pack_opttbl_t *table,
 static int aux_inctable(pack_opttbl_t *table, int n_objs )
 {
     unsigned int i;
-    
+
     table->size += n_objs;
     table->objs = (pack_info_t*)realloc(table->objs, table->size * sizeof(pack_info_t));
     if (table->objs==NULL) {
-        error_msg(progname, "not enough memory for options table\n");
+        error_msg("not enough memory for options table\n");
         return -1;
     }
     for (i = table->nelems; i < table->size; i++)
@@ -135,6 +132,7 @@ static int aux_inctable(pack_opttbl_t *table, int n_objs )
     return 0;
 }
 
+
 /*-------------------------------------------------------------------------
  * Function: options_table_init
  *
@@ -144,33 +142,34 @@ static int aux_inctable(pack_opttbl_t *table, int n_objs )
  *
  *-------------------------------------------------------------------------
  */
-
 int options_table_init( pack_opttbl_t **tbl )
 {
     unsigned int i;
-    pack_opttbl_t* table = (pack_opttbl_t*) malloc(sizeof(pack_opttbl_t));
-    if (table==NULL) {
-        error_msg(progname, "not enough memory for options table\n");
+    pack_opttbl_t *table;
+
+    if(NULL == (table = (pack_opttbl_t *)malloc(sizeof(pack_opttbl_t))))
+    {
+        error_msg("not enough memory for options table\n");
         return -1;
     }
-    
+
     table->size   = 30;
     table->nelems = 0;
-    table->objs   = (pack_info_t*) malloc(table->size * sizeof(pack_info_t));
-    if (table->objs==NULL) {
-        error_msg(progname, "not enough memory for options table\n");
+    if(NULL == (table->objs = (pack_info_t*)malloc(table->size * sizeof(pack_info_t))))
+    {
+        error_msg("not enough memory for options table\n");
+        free(table);
         return -1;
     }
-    
-    for ( i=0; i<table->size; i++)
-    {
+
+    for(i = 0; i < table->size; i++)
         init_packobject(&table->objs[i]);
-    }
-    
+
     *tbl = table;
     return 0;
 }
 
+
 /*-------------------------------------------------------------------------
  * Function: options_table_free
  *
@@ -206,14 +205,14 @@ int options_add_layout( obj_list_t *obj_list,
 {
     unsigned int i, I;
     int          j, added=0, found=0;
-    
+
     /* increase the size of the collection by N_OBJS if necessary */
     if (table->nelems+n_objs >= table->size)
     {
         if (aux_inctable(table,n_objs)<0)
             return -1;
     }
-    
+
     /* search if this object is already in the table; "path" is the key */
     if (table->nelems>0)
     {
@@ -224,12 +223,12 @@ int options_add_layout( obj_list_t *obj_list,
             for (i = 0; i < table->nelems; i++)
             {
                 /*already on the table */
-                if (strcmp(obj_list[j].obj,table->objs[i].path)==0)
+                if (HDstrcmp(obj_list[j].obj,table->objs[i].path)==0)
                 {
                     /* already chunk info inserted for this one; exit */
                     if (table->objs[i].chunk.rank>0)
                     {
-                        error_msg(progname, "chunk information already inserted for <%s>\n",obj_list[j].obj);
+                        error_msg("chunk information already inserted for <%s>\n",obj_list[j].obj);
                         exit(EXIT_FAILURE);
                     }
                     /* insert the layout info */
@@ -241,13 +240,13 @@ int options_add_layout( obj_list_t *obj_list,
                     }
                 } /* if */
             } /* i */
-            
+
             if (found==0)
             {
                 /* keep the grow in a temp var */
                 I = table->nelems + added;
                 added++;
-                strcpy(table->objs[I].path,obj_list[j].obj);
+                HDstrcpy(table->objs[I].path,obj_list[j].obj);
                 aux_tblinsert_layout(table,I,pack);
             }
             /* cases where we have an already inserted name but there is a new name also
@@ -255,17 +254,17 @@ int options_add_layout( obj_list_t *obj_list,
             -f dset1:GZIP=1 -l dset1,dset2:CHUNK=20x20
             dset1 is already inserted, but dset2 must also be
             */
-            else if (found==1 && strcmp(obj_list[j].obj,table->objs[i].path)!=0)
+            else if (found==1 && HDstrcmp(obj_list[j].obj,table->objs[i].path)!=0)
             {
                 /* keep the grow in a temp var */
                 I = table->nelems + added;
                 added++;
-                strcpy(table->objs[I].path,obj_list[j].obj);
+                HDstrcpy(table->objs[I].path,obj_list[j].obj);
                 aux_tblinsert_layout(table,I,pack);
             }
         } /* j */
     }
-    
+
     /* first time insertion */
     else
     {
@@ -274,14 +273,14 @@ int options_add_layout( obj_list_t *obj_list,
         {
             I = table->nelems + added;
             added++;
-            strcpy(table->objs[I].path,obj_list[j].obj);
+            HDstrcpy(table->objs[I].path,obj_list[j].obj);
             aux_tblinsert_layout(table,I,pack);
-            
+
         }
     }
-    
+
     table->nelems+= added;
-    
+
     return 0;
 }
 
@@ -302,17 +301,17 @@ int options_add_filter(obj_list_t *obj_list,
                        filter_info_t filt,
                        pack_opttbl_t *table )
 {
-    
+
     unsigned int i, I;
     int          j, added=0, found=0;
-    
+
     /* increase the size of the collection by N_OBJS if necessary */
     if (table->nelems+n_objs >= table->size)
     {
         if (aux_inctable(table,n_objs)<0)
             return -1;
     }
-    
+
     /* search if this object is already in the table; "path" is the key */
     if (table->nelems>0)
     {
@@ -323,7 +322,7 @@ int options_add_filter(obj_list_t *obj_list,
             for (i = 0; i < table->nelems; i++)
             {
                 /*already on the table */
-                if (strcmp(obj_list[j].obj,table->objs[i].path)==0)
+                if (HDstrcmp(obj_list[j].obj,table->objs[i].path)==0)
                 {
                     /* insert */
                     aux_tblinsert_filter(table,i,filt);
@@ -331,13 +330,13 @@ int options_add_filter(obj_list_t *obj_list,
                     break;
                 } /* if */
             } /* i */
-            
+
             if (found==0)
             {
                 /* keep the grow in a temp var */
                 I = table->nelems + added;
                 added++;
-                strcpy(table->objs[I].path,obj_list[j].obj);
+                HDstrcpy(table->objs[I].path,obj_list[j].obj);
                 aux_tblinsert_filter(table,I,filt);
             }
             /* cases where we have an already inserted name but there is a new name also
@@ -345,17 +344,17 @@ int options_add_filter(obj_list_t *obj_list,
             -l dset1:CHUNK=20x20 -f dset1,dset2:GZIP=1
             dset1 is already inserted, but dset2 must also be
             */
-            else if (found==1 && strcmp(obj_list[j].obj,table->objs[i].path)!=0)
+            else if (found==1 && HDstrcmp(obj_list[j].obj,table->objs[i].path)!=0)
             {
                 /* keep the grow in a temp var */
                 I = table->nelems + added;
                 added++;
-                strcpy(table->objs[I].path,obj_list[j].obj);
+                HDstrcpy(table->objs[I].path,obj_list[j].obj);
                 aux_tblinsert_filter(table,I,filt);
             }
         } /* j */
     }
-    
+
     /* first time insertion */
     else
     {
@@ -364,13 +363,13 @@ int options_add_filter(obj_list_t *obj_list,
         {
             I = table->nelems + added;
             added++;
-            strcpy(table->objs[I].path,obj_list[j].obj);
+            HDstrcpy(table->objs[I].path,obj_list[j].obj);
             aux_tblinsert_filter(table,I,filt);
         }
     }
-    
+
     table->nelems+= added;
-    
+
     return 0;
 }
 
@@ -388,16 +387,16 @@ pack_info_t* options_get_object( const char *path,
                                  pack_opttbl_t *table )
 {
     unsigned int i;
-    
+
     for ( i = 0; i < table->nelems; i++)
     {
         /* found it */
-        if (strcmp(table->objs[i].path,path)==0)
+        if (HDstrcmp(table->objs[i].path,path)==0)
         {
             return (&table->objs[i]);
         }
     }
-    
+
     return NULL;
 }
 

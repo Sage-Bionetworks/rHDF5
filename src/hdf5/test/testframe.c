@@ -26,7 +26,7 @@
 /*
  * Definitions for the testing structure.
  */
-#define MAXNUMOFTESTS   40
+#define MAXNUMOFTESTS   50
 #define MAXTESTNAME     16
 #define MAXTESTDESC     64
 
@@ -45,9 +45,12 @@ typedef struct TestStruct {
  * Variables used by testing framework.
  */
 static int num_errs = 0;        /* Total number of errors during testing */
-static int Verbosity = VERBO_DEF;       /* Default Verbosity is Low */
+int TestVerbosity = VERBO_DEF;       /* Default Verbosity is Low */
 static int Summary = 0;		/* Show test summary. Default is no. */
 static int CleanUp = 1;		/* Do cleanup or not. Default is yes. */
+static int TestExpress = -1;	/* Do TestExpress or not. -1 means not set yet. */
+static H5E_auto_t	*PrintErrorStackFunc;
+static void		**PrintErrorStackData;
 static TestStruct Test[MAXNUMOFTESTS];
 static int    Index = 0;
 static const void *Test_parameters = NULL;
@@ -123,18 +126,20 @@ AddTest(const char *TheName, void (*TheCall) (void), void (*Cleanup) (void), con
  */
 void TestInit(const char *ProgName, void (*private_usage)(void), int (*private_parser)(int ac, char *av[]))
 {
-#if !(defined MAC || defined __MWERKS__ || defined SYMANTEC_C)
+#if !(defined MAC || defined SYMANTEC_C)
     /* Un-buffer the stdout and stderr */
     setbuf(stderr, NULL);
     setbuf(stdout, NULL);
 #endif
 
+    /* Save error printing settings */
+    H5Eget_auto2(H5E_DEFAULT, PrintErrorStackFunc, PrintErrorStackData);
     /*
      * Turn off automatic error reporting since we do it ourselves.  Besides,
      * half the functions this test calls are private, so automatic error
      * reporting wouldn't do much good since it's triggered at the API layer.
      */
-    H5Eset_auto(NULL, NULL);
+    PrintErrorStackOff();
 
     /*
      * Record the program name and private routines if provided.
@@ -360,7 +365,7 @@ void TestCleanup(void)
  */
 int GetTestVerbosity(void)
 {
-    return(Verbosity);
+    return(TestVerbosity);
 }
 
 /*
@@ -371,8 +376,73 @@ int SetTestVerbosity(int newval)
 {
     int oldval;
 
-    oldval = Verbosity;
-    Verbosity = newval;
+    oldval = TestVerbosity;
+    TestVerbosity = newval;
+    return(oldval);
+}
+
+/*
+ * Retrieve the TestExpress mode for the testing framework
+ Values:
+ 0: Exhaustive run
+    Tests should take as long as necessary
+ 1: Full run.  Default if HDF5TestExpress is not defined
+    Tests should take no more than 30 minutes
+ 2: Quick run
+    Tests should take no more than 10 minutes
+ 3: Smoke test.  Default if HDF5TestExpress is set to a value other than 0-3
+    Tests should take less than 1 minute
+
+ Design:
+ If the environment variable $HDF5TestExpress is defined,
+ then test programs should skip some tests so that they
+ complete sooner.
+
+ Terms:
+ A "test" is a single executable, even if it contains multiple
+ sub-tests.
+ The standard system for test times is a Linux machine running in
+ NFS space (to catch tests that involve a great deal of disk I/O).
+
+ Implementation:
+ I think this can be easily implemented in the test library (libh5test.a)
+ so that all tests can just call it to check the status of $HDF5TestExpress.
+ */
+int GetTestExpress(void)
+{
+    char * env_val;
+
+    /* set it here for now.  Should be done in something like h5test_init(). */
+    if(TestExpress==-1)
+    {
+       env_val = getenv("HDF5TestExpress");
+
+       if(env_val == NULL)
+         SetTestExpress(1);
+       else if(strcmp(env_val, "0") == 0)
+         SetTestExpress(0);
+       else if(strcmp(env_val, "1") == 0)
+         SetTestExpress(1);
+       else if(strcmp(env_val, "2") == 0)
+         SetTestExpress(2);
+       else
+         SetTestExpress(3);
+    }
+
+    return(TestExpress);
+}
+
+/*
+ * Set the TestExpress mode for the testing framework.
+ * Return previous TestExpress mode.
+ * Values: non-zero means TestExpress mode is on, 0 means off.
+ */
+int SetTestExpress(int newval)
+{
+    int oldval;
+
+    oldval = TestExpress;
+    TestExpress = newval;
     return(oldval);
 }
 
@@ -521,4 +591,38 @@ void SetTest(const char *testname, int action)
 	    printf("*** ERROR: Unknown action (%d) for SetTest\n", action);
 	    break;
     }
+}
+
+
+/*
+ * Enable alarm on test execution, configurable by environment variable
+ */
+void TestAlarmOn(void)
+{
+    char * env_val = HDgetenv("HDF5_ALARM_SECONDS");    /* Alarm environment */
+    unsigned long alarm_sec = H5_ALARM_SEC;     /* Number of seconds before alarm goes off */
+
+    /* Get the alarm value from the environment variable, if set */
+    if(env_val != NULL)
+        alarm_sec = (unsigned)HDstrtoul(env_val, (char **)NULL, 10);
+
+    /* Set the number of seconds before alarm goes off */
+    HDalarm((unsigned)alarm_sec);
+}
+
+
+/*
+ * Enable error stack printing when errors occur.
+ */
+void PrintErrorStackOn(void)
+{
+    H5Eset_auto2(H5E_DEFAULT, PrintErrorStackFunc, PrintErrorStackData);
+}
+
+/*
+ * Disable error stack printing when errors occur.
+ */
+void PrintErrorStackOff(void)
+{
+    H5Eset_auto2(H5E_DEFAULT, NULL, NULL);
 }

@@ -15,7 +15,7 @@
 
 /*-------------------------------------------------------------------------
  *
- * Created:	H5Cproto.h
+ * Created:	H5Cpublic.h
  *              June 4, 2005
  *              John Mainzer
  *
@@ -34,6 +34,26 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+enum H5C_cache_incr_mode
+{
+    H5C_incr__off,
+    H5C_incr__threshold
+};
+
+enum H5C_cache_flash_incr_mode
+{
+     H5C_flash_incr__off,
+     H5C_flash_incr__add_space
+};
+
+enum H5C_cache_decr_mode
+{
+    H5C_decr__off,
+    H5C_decr__threshold,
+    H5C_decr__age_out,
+    H5C_decr__age_out_with_threshold
+};
 
 #ifdef __cplusplus
 }

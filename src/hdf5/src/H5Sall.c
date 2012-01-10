@@ -42,9 +42,13 @@ static hssize_t H5S_all_serial_size(const H5S_t *space);
 static herr_t H5S_all_serialize(const H5S_t *space, uint8_t *buf);
 static herr_t H5S_all_deserialize(H5S_t *space, const uint8_t *buf);
 static herr_t H5S_all_bounds(const H5S_t *space, hsize_t *start, hsize_t *end);
+static herr_t H5S_all_offset(const H5S_t *space, hsize_t *off);
 static htri_t H5S_all_is_contiguous(const H5S_t *space);
 static htri_t H5S_all_is_single(const H5S_t *space);
 static htri_t H5S_all_is_regular(const H5S_t *space);
+static herr_t H5S_all_adjust_u(H5S_t *space, const hsize_t *offset);
+static herr_t H5S_all_project_scalar(const H5S_t *space, hsize_t *offset);
+static herr_t H5S_all_project_simple(const H5S_t *space, H5S_t *new_space, hsize_t *offset);
 static herr_t H5S_all_iter_init(H5S_sel_iter_t *iter, const H5S_t *space);
 
 /* Selection iteration callbacks */
@@ -69,9 +73,13 @@ const H5S_select_class_t H5S_sel_all[1] = {{
     H5S_all_serialize,
     H5S_all_deserialize,
     H5S_all_bounds,
+    H5S_all_offset,
     H5S_all_is_contiguous,
     H5S_all_is_single,
     H5S_all_is_regular,
+    H5S_all_adjust_u,
+    H5S_all_project_scalar,
+    H5S_all_project_simple,
     H5S_all_iter_init,
 }};
 
@@ -368,18 +376,18 @@ H5S_all_iter_release (H5S_sel_iter_t UNUSED * iter)
  EXAMPLES
  REVISION LOG
 --------------------------------------------------------------------------*/
-herr_t
-H5S_all_release (H5S_t UNUSED * space)
+static herr_t
+H5S_all_release(H5S_t *space)
 {
-    FUNC_ENTER_NOAPI_NOFUNC(H5S_all_release);
+    FUNC_ENTER_NOAPI_NOINIT_NOFUNC(H5S_all_release)
 
     /* Check args */
-    assert (space);
+    HDassert(space);
 
     /* Reset the number of elements in the selection */
-    space->select.num_elem=0;
+    space->select.num_elem = 0;
 
-    FUNC_LEAVE_NOAPI(SUCCEED);
+    FUNC_LEAVE_NOAPI(SUCCEED)
 }   /* H5S_all_release() */
 
 
@@ -402,18 +410,18 @@ H5S_all_release (H5S_t UNUSED * space)
  EXAMPLES
  REVISION LOG
 --------------------------------------------------------------------------*/
-herr_t
+static herr_t
 H5S_all_copy(H5S_t *dst, const H5S_t UNUSED *src, hbool_t UNUSED share_selection)
 {
-    FUNC_ENTER_NOAPI_NOFUNC(H5S_all_copy);
+    FUNC_ENTER_NOAPI_NOFUNC(H5S_all_copy)
 
-    assert(src);
-    assert(dst);
+    HDassert(src);
+    HDassert(dst);
 
     /* Set number of elements in selection */
-    dst->select.num_elem=(hsize_t)H5S_GET_EXTENT_NPOINTS(dst);
+    dst->select.num_elem = (hsize_t)H5S_GET_EXTENT_NPOINTS(dst);
 
-    FUNC_LEAVE_NOAPI(SUCCEED);
+    FUNC_LEAVE_NOAPI(SUCCEED)
 } /* end H5S_all_copy() */
 
 
@@ -538,20 +546,20 @@ H5S_all_serialize (const H5S_t *space, uint8_t *buf)
  REVISION LOG
 --------------------------------------------------------------------------*/
 herr_t
-H5S_all_deserialize (H5S_t *space, const uint8_t UNUSED *buf)
+H5S_all_deserialize(H5S_t *space, const uint8_t UNUSED *buf)
 {
     herr_t ret_value;   /* return value */
 
-    FUNC_ENTER_NOAPI(H5S_all_deserialize, FAIL);
+    FUNC_ENTER_NOAPI(H5S_all_deserialize, FAIL)
 
-    assert(space);
+    HDassert(space);
 
     /* Change to "all" selection */
-    if((ret_value=H5S_select_all(space,1))<0)
-        HGOTO_ERROR(H5E_DATASPACE, H5E_CANTDELETE, FAIL, "can't change selection");
+    if((ret_value = H5S_select_all(space, TRUE)) < 0)
+        HGOTO_ERROR(H5E_DATASPACE, H5E_CANTDELETE, FAIL, "can't change selection")
 
 done:
-    FUNC_LEAVE_NOAPI(ret_value);
+    FUNC_LEAVE_NOAPI(ret_value)
 }   /* H5S_all_deserialize() */
 
 
@@ -583,26 +591,61 @@ done:
 herr_t
 H5S_all_bounds(const H5S_t *space, hsize_t *start, hsize_t *end)
 {
-    int rank;                  /* Dataspace rank */
-    int i;                     /* index variable */
+    unsigned rank;                  /* Dataspace rank */
+    unsigned i;                     /* index variable */
 
-    FUNC_ENTER_NOAPI_NOFUNC(H5S_all_bounds);
+    FUNC_ENTER_NOAPI_NOFUNC(H5S_all_bounds)
 
-    assert(space);
-    assert(start);
-    assert(end);
+    HDassert(space);
+    HDassert(start);
+    HDassert(end);
 
     /* Get the dataspace extent rank */
-    rank=space->extent.rank;
+    rank = space->extent.rank;
 
     /* Just copy over the complete extent */
-    for(i=0; i<rank; i++) {
-        start[i]=0;
-        end[i]=space->extent.size[i]-1;
+    for(i = 0; i < rank; i++) {
+        start[i] = 0;
+        end[i] = space->extent.size[i] - 1;
     } /* end for */
 
-    FUNC_LEAVE_NOAPI(SUCCEED);
-}   /* H5Sget_all_bounds() */
+    FUNC_LEAVE_NOAPI(SUCCEED)
+}   /* H5S_all_bounds() */
+
+
+/*--------------------------------------------------------------------------
+ NAME
+    H5S_all_offset
+ PURPOSE
+    Gets the linear offset of the first element for the selection.
+ USAGE
+    herr_t H5S_all_offset(space, offset)
+        const H5S_t *space;     IN: Dataspace pointer of selection to query
+        hsize_t *offset;        OUT: Linear offset of first element in selection
+ RETURNS
+    Non-negative on success, negative on failure
+ DESCRIPTION
+    Retrieves the linear offset (in "units" of elements) of the first element
+    selected within the dataspace.
+ GLOBAL VARIABLES
+ COMMENTS, BUGS, ASSUMPTIONS
+    Calling this function on a "none" selection returns fail.
+ EXAMPLES
+ REVISION LOG
+--------------------------------------------------------------------------*/
+herr_t
+H5S_all_offset(const H5S_t UNUSED *space, hsize_t *offset)
+{
+    FUNC_ENTER_NOAPI_NOFUNC(H5S_all_offset)
+
+    HDassert(space);
+    HDassert(offset);
+
+    /* 'All' selections always start at offset 0 */
+    *offset = 0;
+
+    FUNC_LEAVE_NOAPI(SUCCEED)
+}   /* H5S_all_offset() */
 
 
 /*--------------------------------------------------------------------------
@@ -696,13 +739,107 @@ H5S_all_is_regular(const H5S_t UNUSED *space)
 
 /*--------------------------------------------------------------------------
  NAME
+    H5S_all_adjust_u
+ PURPOSE
+    Adjust an "all" selection by subtracting an offset
+ USAGE
+    herr_t H5S_all_adjust_u(space, offset)
+        H5S_t *space;           IN/OUT: Pointer to dataspace to adjust
+        const hsize_t *offset; IN: Offset to subtract
+ RETURNS
+    Non-negative on success, negative on failure
+ DESCRIPTION
+    Moves selection by subtracting an offset from it.
+ GLOBAL VARIABLES
+ COMMENTS, BUGS, ASSUMPTIONS
+ EXAMPLES
+ REVISION LOG
+--------------------------------------------------------------------------*/
+herr_t
+H5S_all_adjust_u(H5S_t UNUSED *space, const hsize_t UNUSED *offset)
+{
+    FUNC_ENTER_NOAPI_NOFUNC(H5S_all_adjust_u)
+
+    /* Check args */
+    HDassert(space);
+    HDassert(offset);
+
+    FUNC_LEAVE_NOAPI(SUCCEED)
+}   /* H5S_all_adjust_u() */
+
+
+/*-------------------------------------------------------------------------
+ * Function:	H5S_all_project_scalar
+ *
+ * Purpose:	Projects a single element 'all' selection into a scalar
+ *              dataspace
+ *
+ * Return:	non-negative on success, negative on failure.
+ *
+ * Programmer:	Quincey Koziol
+ *              Sunday, July 18, 2010
+ *
+ *-------------------------------------------------------------------------
+ */
+static herr_t
+H5S_all_project_scalar(const H5S_t UNUSED *space, hsize_t *offset)
+{
+    FUNC_ENTER_NOAPI_NOINIT_NOFUNC(H5S_all_project_scalar)
+
+    /* Check args */
+    HDassert(space && H5S_SEL_ALL == H5S_GET_SELECT_TYPE(space));
+    HDassert(offset);
+
+    /* Set offset of selection in projected buffer */
+    *offset = 0;
+
+    FUNC_LEAVE_NOAPI(SUCCEED)
+}   /* H5S_all_project_scalar() */
+
+
+/*-------------------------------------------------------------------------
+ * Function:	H5S_all_project_simple
+ *
+ * Purpose:	Projects an 'all' selection onto/into a simple dataspace
+ *              of a different rank
+ *
+ * Return:	non-negative on success, negative on failure.
+ *
+ * Programmer:	Quincey Koziol
+ *              Sunday, July 18, 2010
+ *
+ *-------------------------------------------------------------------------
+ */
+static herr_t
+H5S_all_project_simple(const H5S_t *base_space, H5S_t *new_space, hsize_t *offset)
+{
+    herr_t ret_value = SUCCEED;         /* Return value */
+
+    FUNC_ENTER_NOAPI_NOINIT(H5S_all_project_simple)
+
+    /* Check args */
+    HDassert(base_space && H5S_SEL_ALL == H5S_GET_SELECT_TYPE(base_space));
+    HDassert(new_space);
+    HDassert(offset);
+
+    /* Select the entire new space */
+    if(H5S_select_all(new_space, TRUE) < 0)
+        HGOTO_ERROR(H5E_DATASPACE, H5E_CANTSET, FAIL, "unable to set all selection")
+
+done:
+    FUNC_LEAVE_NOAPI(ret_value)
+}   /* H5S_all_project_simple() */
+
+
+/*--------------------------------------------------------------------------
+ NAME
     H5S_select_all
  PURPOSE
     Specify the the entire extent is selected
  USAGE
     herr_t H5S_select_all(dsid)
         hid_t dsid;             IN: Dataspace ID of selection to modify
-        unsigned rel_prev;      IN: Flag whether to release previous selection or not
+        hbool_t rel_prev;      IN: Flag whether to release previous selection or not
  RETURNS
     Non-negative on success/Negative on failure
  DESCRIPTION
@@ -713,28 +850,28 @@ H5S_all_is_regular(const H5S_t UNUSED *space)
  REVISION LOG
 --------------------------------------------------------------------------*/
 herr_t
-H5S_select_all (H5S_t *space, unsigned rel_prev)
+H5S_select_all(H5S_t *space, hbool_t rel_prev)
 {
-    herr_t ret_value=SUCCEED;  /* return value */
+    herr_t ret_value = SUCCEED;  /* return value */
 
-    FUNC_ENTER_NOAPI(H5S_select_all, FAIL);
+    FUNC_ENTER_NOAPI(H5S_select_all, FAIL)
 
     /* Check args */
-    assert(space);
+    HDassert(space);
 
     /* Remove current selection first */
     if(rel_prev)
-        if(H5S_SELECT_RELEASE(space)<0)
-            HGOTO_ERROR(H5E_DATASPACE, H5E_CANTDELETE, FAIL, "can't release selection");
+        if(H5S_SELECT_RELEASE(space) < 0)
+            HGOTO_ERROR(H5E_DATASPACE, H5E_CANTDELETE, FAIL, "can't release selection")
 
     /* Set number of elements in selection */
-    space->select.num_elem=(hsize_t)H5S_GET_EXTENT_NPOINTS(space);
+    space->select.num_elem = (hsize_t)H5S_GET_EXTENT_NPOINTS(space);
 
     /* Set selection type */
-    space->select.type=H5S_sel_all;
+    space->select.type = H5S_sel_all;
 
 done:
-    FUNC_LEAVE_NOAPI(ret_value);
+    FUNC_LEAVE_NOAPI(ret_value)
 }   /* H5S_select_all() */
 
 
@@ -755,23 +892,25 @@ done:
  EXAMPLES
  REVISION LOG
 --------------------------------------------------------------------------*/
-herr_t H5Sselect_all (hid_t spaceid)
+herr_t
+H5Sselect_all(hid_t spaceid)
 {
-    H5S_t	*space = NULL;  /* Dataspace to modify selection of */
-    herr_t ret_value=SUCCEED;  /* return value */
+    H5S_t *space;               /* Dataspace to modify selection of */
+    herr_t ret_value = SUCCEED; /* return value */
 
-    FUNC_ENTER_API(H5Sselect_all, FAIL);
+    FUNC_ENTER_API(H5Sselect_all, FAIL)
+    H5TRACE1("e", "i", spaceid);
 
     /* Check args */
-    if (NULL == (space=H5I_object_verify(spaceid, H5I_DATASPACE)))
-        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a data space");
+    if(NULL == (space = (H5S_t *)H5I_object_verify(spaceid, H5I_DATASPACE)))
+        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a data space")
 
     /* Call internal routine to do the work */
-    if((ret_value=H5S_select_all(space,1))<0)
-        HGOTO_ERROR(H5E_DATASPACE, H5E_CANTDELETE, FAIL, "can't change selection");
+    if(H5S_select_all(space, TRUE) < 0)
+        HGOTO_ERROR(H5E_DATASPACE, H5E_CANTDELETE, FAIL, "can't change selection")
 
 done:
-    FUNC_LEAVE_API(ret_value);
+    FUNC_LEAVE_API(ret_value)
 }   /* H5Sselect_all() */
 
 

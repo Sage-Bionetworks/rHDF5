@@ -22,7 +22,7 @@
 
 /** From H5private.h **/
 
-#include "H5public.h"		/* Include Public Definitions		*/
+#include "H5public.h"    /* Include Public Definitions    */
 
 
 /*
@@ -47,78 +47,57 @@
  * And now for a couple non-Posix functions...  Watch out for systems that
  * define these in terms of macros.
  */
-#ifdef _WIN32
-#define HDstrdup(S)		   _strdup(S)
-#else /* _WIN32 */
+#ifdef H5_HAVE_WIN32_API
+#define HDstrdup(S)       _strdup(S)
+#else /* H5_HAVE_WIN32_API */
 
 #if !defined strdup && !defined H5_HAVE_STRDUP
 extern char *strdup(const char *s);
 #endif
 
-#define HDstrdup(S)		  strdup(S)
+#define HDstrdup(S)      strdup(S)
 
-#endif /* _WIN32 */
+#endif /* H5_HAVE_WIN32_API */
 
 H5_DLL int HDfprintf (FILE *stream, const char *fmt, ...);
-#define HDstrcmp(S,T)		  strcmp(S,T)
-#define HDstrlen(S)		  strlen(S)
-#define HDstrncmp(S,T,L)	  strncmp(S,T,L)
-#define HDstrncpy(X,Y,Z)	  strncpy(X,Y,Z)
-#define HDstrchr(S,C)		  strchr(S,C)
-#define HDfree(M)		  free(M)
+#define HDstrcmp(S,T)    strcmp(S,T)
+#define HDstrlen(S)    strlen(S)
+#define HDstrncmp(S,T,L)  strncmp(S,T,L)
+#define HDstrncpy(X,Y,Z)  strncpy(X,Y,Z)
+#define HDstrchr(S,C)    strchr(S,C)
+#define HDfree(M)    free(M)
 
 
 #ifdef _O_BINARY
-#define HDopen(S,F,M)		  open(S,F|_O_BINARY,M)
+#define HDopen(S,F,M)    open(S,F|_O_BINARY,M)
 #else
-#define HDopen(S,F,M)		  open(S,F,M)
+#define HDopen(S,F,M)    open(S,F,M)
 #endif
-#define HDclose(F)		  close(F)
+#define HDclose(F)    close(F)
 
-#ifdef _WIN32
-     #ifdef __MWERKS__
-        #define HDlseek(F,O,W)  lseek(F,O,W)
-     #else /*MSVS */
-        #define HDlseek(F,O,W)  _lseeki64(F,O,W)
-     #endif
+#ifdef H5_HAVE_WIN32_API
+#define HDlseek(F,O,W)    _lseeki64(F,O,W)
 #else
-#define HDlseek(F,O,W)		 lseek(F,O,W)
+#define HDlseek(F,O,W)    lseek(F,O,W)
 #endif
 
-#if defined (__MWERKS__)
-/* workaround for a bug in the Metrowerks version 6.0 header file for write
- which is not defined as const void*
- */
-#define HDwrite(F,M,Z)		write(F,(void*)M,Z)
-#else
-#define HDwrite(F,M,Z)		write(F,M,Z)
-#endif
+#define HDwrite(F,M,Z)    write(F,M,Z)
 
-#define HDread(F,M,Z)		read(F,M,Z)
+#define HDread(F,M,Z)    read(F,M,Z)
 
-#ifdef _WIN32
-     #ifdef __MWERKS__
-     #define HDstat(S,B)   	stat(S,B)
-     #else /*MSVC*/
-     #define HDstat(S,B)	_stati64(S,B)
-     #endif
+#ifdef H5_HAVE_WIN32_API
+     #define HDstat(S,B)  _stati64(S,B)
 #else
 #define HDstat(S,B)  stat(S,B)
 #endif
 
-#ifdef _WIN32
-     #ifdef __MWERKS__
-     #define HDfstat(F,B)       fstat(F,B)
-     typedef struct stat	h5_stat_t;
-     typedef off_t              h5_stat_size_t;
-     #else /*MSVC*/
-     #define HDfstat(F,B)	_fstati64(F,B)
-     typedef struct _stati64	h5_stat_t;
-     typedef __int64            h5_stat_size_t;
-     #endif
+#ifdef H5_HAVE_WIN32_API
+#define HDfstat(F,B)    _fstati64(F,B)
+typedef struct _stati64    h5_stat_t;
+typedef __int64              h5_stat_size_t;
 #else
 #define HDfstat(F,B)            fstat(F,B)
-typedef struct stat		h5_stat_t;
+typedef struct stat    h5_stat_t;
 typedef off_t                   h5_stat_size_t;
 #endif
 
@@ -131,25 +110,6 @@ typedef off_t                   h5_stat_size_t;
 #ifndef TRUE
 #   define TRUE 1
 #endif
-
-/*
- * Although `long long' is part of the revised ANSI-C some compilers don't
- * support it yet.  We define `long_long' as the longest integral integer type
- * supported by the compiler, usually 64 bits.	It must be legal to qualify
- * `long_long' with `unsigned'.
- */
-#if H5_SIZEOF_LONG_LONG>0
-#   define long_long	long long
-#elif H5_SIZEOF___INT64>0
-#   define long_long	__int64	/*Win32*/
-#   undef H5_SIZEOF_LONG_LONG
-#   define H5_SIZEOF_LONG_LONG H5_SIZEOF___INT64
-#else
-#   define long_long	long int
-#   undef H5_SIZEOF_LONG_LONG
-#   define H5_SIZEOF_LONG_LONG H5_SIZEOF_LONG
-#endif
-
 
 
 /** From h5test.h **/
@@ -174,7 +134,7 @@ extern const char *opt_arg;     /* flag argument (or value)                 */
 
 enum {
     no_arg = 0,         /* doesn't take an argument     */
-    require_arg,        /* requires an argument	        */
+    require_arg,        /* requires an argument          */
     optional_arg        /* argument is optional         */
 };
 

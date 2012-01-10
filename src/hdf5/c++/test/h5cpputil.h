@@ -35,7 +35,8 @@ using std::cerr;
 using std::endl;
 #endif
 
-#define SUBTEST(WHAT)   {printf("   Subtest: %-52s",WHAT); fflush(stdout);}
+#define MESSAGE(V,A) {if (HDGetTestVerbosity()>(V)) print_func A;}
+#define SUBTEST(TEST) {printf("   Subtest: %-52s",TEST); fflush(stdout);}
 
 int check_values (hsize_t i, hsize_t j, int apoint, int acheck);
 int test_report (int, const H5std_string&);
@@ -55,6 +56,9 @@ class TestFailedException : public Exception {
 	TestFailedException();
 	virtual ~TestFailedException();
 };
+
+// Overloaded/Template functions to verify values and display proper info
+void verify_val(const char* x, const char* value, const char* where, int line, const char* file_name);
 
 template <class Type1, class Type2>
     void verify_val(Type1 x, Type2 value, const char* where, int line, const char* file_name)
@@ -96,13 +100,13 @@ template <class Type1, class Type2>
     if (GetTestVerbosity()>=VERBO_HI)
     {
 	cerr << endl;
-	cerr << "   Call to routine: " << where << " at line " << line
+        cerr << "   Call to routine: " << where << " at line " << line
 	     << " in " << file_name <<  " had value " << x << endl;
     }
     if (x == value)
     {
 	cerr << endl;
-	cerr << "*** UNEXPECTED VALUE from " << where << " should not be "
+        cerr << "*** UNEXPECTED VALUE from " << where << " should not be "
 	     << value << " at line " << line << " in " << file_name << endl;
 	IncTestNumErrs();
 	throw TestFailedException(where, "");
@@ -122,6 +126,7 @@ void test_h5s();
 void test_reference();
 void test_types();
 void test_vlstrings();
+void test_dset();
 
 /* Prototypes for the cleanup routines */
 void cleanup_attr();

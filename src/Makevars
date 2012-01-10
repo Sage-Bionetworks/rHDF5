@@ -4,12 +4,6 @@ PKG_LIBS = ./hdf5/hdf5/lib/libhdf5.a ./hdf5/hdf5/lib/libhdf5_hl.a ./szip/szip/li
 all: mylibs $(SHLIB)
 
 mylibs:
-	cd szip; ./configure --disable-shared OBJC=$(OBJC); make install
-	cd hdf5; ./configure --disable-shared OBJC=$(OBJC); make install
+	cd szip; ./configure --disable-shared; make install
+	cd hdf5; ./configure --disable-shared; make install
 
-shlib-clean: clean
-
-clean:
-	rm -rf ../src-i386
-	rm -rf ../src-x86-64
-	rm *.so

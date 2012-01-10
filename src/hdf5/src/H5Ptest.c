@@ -28,6 +28,7 @@
 #include "H5Eprivate.h"		/* Error handling		  	*/
 #include "H5Iprivate.h"		/* IDs			  		*/
 #include "H5Ppkg.h"		/* Property lists		  	*/
+#include "H5Dprivate.h"		/* Dataset		  		*/
 
 /* Local variables */
 
@@ -62,18 +63,18 @@ H5P_get_class_path_test(hid_t pclass_id)
     H5P_genclass_t	*pclass;    /* Property class to query */
     char *ret_value;       /* return value */
 
-    FUNC_ENTER_NOAPI(H5P_get_class_path_test, NULL);
+    FUNC_ENTER_NOAPI(H5P_get_class_path_test, NULL)
 
     /* Check arguments. */
-    if (NULL == (pclass = H5I_object_verify(pclass_id, H5I_GENPROP_CLS)))
+    if(NULL == (pclass = (H5P_genclass_t *)H5I_object_verify(pclass_id, H5I_GENPROP_CLS)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, NULL, "not a property class");
 
     /* Get the property list class path */
-    if ((ret_value=H5P_get_class_path(pclass))==NULL)
-        HGOTO_ERROR(H5E_PLIST, H5E_NOTFOUND, NULL, "unable to query full path of class");
+    if(NULL == (ret_value = H5P_get_class_path(pclass)))
+        HGOTO_ERROR(H5E_PLIST, H5E_NOTFOUND, NULL, "unable to query full path of class")
 
 done:
-    FUNC_LEAVE_NOAPI(ret_value);
+    FUNC_LEAVE_NOAPI(ret_value)
 }   /* H5P_get_class_path_test() */
 
 
@@ -114,7 +115,7 @@ H5P_open_class_path_test(const char *path)
         HGOTO_ERROR(H5E_PLIST, H5E_NOTFOUND, FAIL, "unable to find class with full path");
 
     /* Get an atom for the class */
-    if ((ret_value=H5I_register(H5I_GENPROP_CLS, pclass))<0)
+    if ((ret_value=H5I_register(H5I_GENPROP_CLS, pclass, TRUE))<0)
         HGOTO_ERROR(H5E_PLIST, H5E_CANTREGISTER, FAIL, "unable to atomize property list class");
 
 done:
@@ -123,4 +124,50 @@ done:
 
     FUNC_LEAVE_NOAPI(ret_value);
 }   /* H5P_open_class_path_test() */
+
+
+/*--------------------------------------------------------------------------
+ NAME
+    H5P_reset_external_file_test
+ PURPOSE
+    Routine to reset external file list
+ USAGE
+    herr_t H5P_reset_external_file_test(plist)
+           hid_t dcpl_id; IN: the property list
+
+ RETURNS
+    Non-negative on success/Negative on failure
+
+ PROGRAMMER
+    Peter Cao
+    April 30, 2007
+--------------------------------------------------------------------------*/
+herr_t
+H5P_reset_external_file_test(hid_t dcpl_id)
+{
+    H5O_efl_t       efl;                /* External file list */
+    H5P_genplist_t *plist;              /* Property list */
+    herr_t ret_value = SUCCEED;         /* Return value */
+
+    FUNC_ENTER_NOAPI(H5P_reset_external_file_test, FAIL)
+
+    /* Check arguments */
+    if(NULL == (plist = (H5P_genplist_t *)H5I_object(dcpl_id)))
+        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a dataset creation property list")
+
+    /* get external file list */
+    if(H5P_get(plist, H5D_CRT_EXT_FILE_LIST_NAME, &efl) < 0)
+        HGOTO_ERROR(H5E_PLIST, H5E_CANTGET, FAIL, "can't get external file list")
+
+    /* Clean up any values set for the external file-list */
+    if(H5O_msg_reset(H5O_EFL_ID, &efl) < 0)
+        HGOTO_ERROR(H5E_DATASET, H5E_CANTFREE, FAIL, "can't release external file list info")
+
+    /* set external file list */
+    if(H5P_set(plist, H5D_CRT_EXT_FILE_LIST_NAME, &efl) < 0)
+        HGOTO_ERROR(H5E_PLIST, H5E_CANTGET, FAIL, "can't get external file list")
+
+done:
+    FUNC_LEAVE_NOAPI(ret_value)
+}   /* H5P_reset_external_file_test() */
 

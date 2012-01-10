@@ -1,6 +1,3 @@
-#############################
-Expected output for 'h5dump tall.h5'
-#############################
 HDF5 "tall.h5" {
 GROUP "/" {
    ATTRIBUTE "attr1" {
@@ -64,6 +61,10 @@ GROUP "/" {
          }
       }
       GROUP "g1.2" {
+         EXTERNAL_LINK "extlink" {
+            TARGETFILE "somefile"
+            TARGETPATH "somepath"
+         }
          GROUP "g1.2.1" {
             SOFTLINK "slink" {
                LINKTARGET "somevalue"
@@ -87,6 +88,9 @@ GROUP "/" {
          (1,0): 0, 0.2, 0.4, 0.6, 0.8,
          (2,0): 0, 0.3, 0.6, 0.9, 1.2
          }
+      }
+      USERDEFINED_LINK "udlink" {
+         LINKCLASS 187
       }
    }
 }

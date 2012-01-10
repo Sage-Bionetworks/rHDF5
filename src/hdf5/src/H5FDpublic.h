@@ -26,23 +26,53 @@
 #define H5_HAVE_VFL 1 /*define a convenient app feature test*/
 #define H5FD_VFD_DEFAULT 0   /* Default VFL driver value */
 
-/*
- * Types of allocation requests. The values larger than H5FD_MEM_DEFAULT
- * should not change other than adding new types to the end. These numbers
- * might appear in files.
- */
-typedef enum H5FD_mem_t {
-    H5FD_MEM_NOLIST	= -1,			/*must be negative*/
-    H5FD_MEM_DEFAULT	= 0,			/*must be zero*/
-    H5FD_MEM_SUPER      = 1,
-    H5FD_MEM_BTREE      = 2,
-    H5FD_MEM_DRAW       = 3,
-    H5FD_MEM_GHEAP      = 4,
-    H5FD_MEM_LHEAP      = 5,
-    H5FD_MEM_OHDR       = 6,
+/* Types of allocation requests: see H5Fpublic.h  */
+typedef enum H5F_mem_t	H5FD_mem_t;
 
-    H5FD_MEM_NTYPES				/*must be last*/
-} H5FD_mem_t;
+/* Map "fractal heap" header blocks to 'ohdr' type file memory, since its
+ * a fair amount of work to add a new kind of file memory and they are similar
+ * enough to object headers and probably too minor to deserve their own type.
+ *
+ * Map "fractal heap" indirect blocks to 'ohdr' type file memory, since they
+ * are similar to fractal heap header blocks.
+ *
+ * Map "fractal heap" direct blocks to 'lheap' type file memory, since they
+ * will be replacing local heaps.
+ *
+ * Map "fractal heap" 'huge' objects to 'draw' type file memory, since they
+ * represent large objects that are directly stored in the file.
+ *
+ *      -QAK
+ */
+#define H5FD_MEM_FHEAP_HDR      H5FD_MEM_OHDR
+#define H5FD_MEM_FHEAP_IBLOCK   H5FD_MEM_OHDR
+#define H5FD_MEM_FHEAP_DBLOCK   H5FD_MEM_LHEAP
+#define H5FD_MEM_FHEAP_HUGE_OBJ H5FD_MEM_DRAW
+
+/* Map "free space" header blocks to 'ohdr' type file memory, since its
+ * a fair amount of work to add a new kind of file memory and they are similar
+ * enough to object headers and probably too minor to deserve their own type.
+ *
+ * Map "free space" serialized sections to 'lheap' type file memory, since they
+ * are similar enough to local heap info.
+ *
+ *      -QAK
+ */
+#define H5FD_MEM_FSPACE_HDR     H5FD_MEM_OHDR
+#define H5FD_MEM_FSPACE_SINFO   H5FD_MEM_LHEAP
+
+/* Map "shared object header message" master table to 'ohdr' type file memory,
+ * since its a fair amount of work to add a new kind of file memory and they are
+ * similar enough to object headers and probably too minor to deserve their own
+ * type.
+ *
+ * Map "shared object header message" indices to 'btree' type file memory,
+ * since they are similar enough to B-tree nodes.
+ *
+ *      -QAK
+ */
+#define H5FD_MEM_SOHM_TABLE     H5FD_MEM_OHDR
+#define H5FD_MEM_SOHM_INDEX     H5FD_MEM_BTREE
 
 /*
  * A free-list map which maps all types of allocation requests to a single
@@ -127,6 +157,26 @@ typedef enum H5FD_mem_t {
      * and then sub-allocate "small" raw data requests from that larger block.
      */
 #define H5FD_FEAT_AGGREGATE_SMALLDATA   0x00000010
+    /*
+     * Defining the H5FD_FEAT_IGNORE_DRVRINFO for a VFL driver means that
+     * the library will ignore the driver info that is encoded in the file
+     * for the VFL driver.  (This will cause the driver info to be eliminated
+     * from the file when it is flushed/closed, if the file is opened R/W).
+     */
+#define H5FD_FEAT_IGNORE_DRVRINFO       0x00000020
+    /*
+     * Defining the H5FD_FEAT_DIRTY_SBLK_LOAD for a VFL driver means that
+     * the library will mark the superblock dirty when the file is opened
+     * R/W.  This will cause the driver info to be re-encoded when the file
+     * is flushed/closed.
+     */
+#define H5FD_FEAT_DIRTY_SBLK_LOAD       0x00000040
+    /*
+     * Defining the H5FD_FEAT_POSIX_COMPAT_HANDLE for a VFL driver means that
+     * the handle for the VFD (returned with the 'get_handle' callback) is
+     * of type 'int' and is compatible with POSIX I/O calls.
+     */
+#define H5FD_FEAT_POSIX_COMPAT_HANDLE   0x00000080
 
 
 /* Forward declaration */
@@ -153,18 +203,20 @@ typedef struct H5FD_class_t {
     herr_t  (*close)(H5FD_t *file);
     int     (*cmp)(const H5FD_t *f1, const H5FD_t *f2);
     herr_t  (*query)(const H5FD_t *f1, unsigned long *flags);
+    herr_t  (*get_type_map)(const H5FD_t *file, H5FD_mem_t *type_map);
     haddr_t (*alloc)(H5FD_t *file, H5FD_mem_t type, hid_t dxpl_id, hsize_t size);
     herr_t  (*free)(H5FD_t *file, H5FD_mem_t type, hid_t dxpl_id,
                     haddr_t addr, hsize_t size);
-    haddr_t (*get_eoa)(H5FD_t *file);
-    herr_t  (*set_eoa)(H5FD_t *file, haddr_t addr);
-    haddr_t (*get_eof)(H5FD_t *file);
+    haddr_t (*get_eoa)(const H5FD_t *file, H5FD_mem_t type);
+    herr_t  (*set_eoa)(H5FD_t *file, H5FD_mem_t type, haddr_t addr);
+    haddr_t (*get_eof)(const H5FD_t *file);
     herr_t  (*get_handle)(H5FD_t *file, hid_t fapl, void**file_handle);
     herr_t  (*read)(H5FD_t *file, H5FD_mem_t type, hid_t dxpl,
                     haddr_t addr, size_t size, void *buffer);
     herr_t  (*write)(H5FD_t *file, H5FD_mem_t type, hid_t dxpl,
                      haddr_t addr, size_t size, const void *buffer);
     herr_t  (*flush)(H5FD_t *file, hid_t dxpl_id, unsigned closing);
+    herr_t  (*truncate)(H5FD_t *file, hid_t dxpl_id, hbool_t closing);
     herr_t  (*lock)(H5FD_t *file, unsigned char *oid, unsigned lock_type, hbool_t last);
     herr_t  (*unlock)(H5FD_t *file, unsigned char *oid, hbool_t last);
     H5FD_mem_t fl_map[H5FD_MEM_NTYPES];
@@ -184,47 +236,14 @@ typedef struct H5FD_free_t {
 struct H5FD_t {
     hid_t               driver_id;      /*driver ID for this file   */
     const H5FD_class_t *cls;            /*constant class info       */
-    unsigned long       fileno[2];      /* File serial number       */
+    unsigned long       fileno;         /* File 'serial' number     */
     unsigned long       feature_flags;  /* VFL Driver feature Flags */
+    haddr_t             maxaddr;        /* For this file, overrides class */
+    haddr_t             base_addr;      /* Base address for HDF5 data w/in file */
+
+    /* Space allocation management fields */
     hsize_t             threshold;      /* Threshold for alignment  */
     hsize_t             alignment;      /* Allocation alignment     */
-    hsize_t             reserved_alloc; /* Space reserved for later alloc calls */
-
-    /* Metadata aggregation fields */
-    hsize_t             def_meta_block_size;  /* Metadata allocation
-                                               * block size (if
-                                               * aggregating metadata) */
-    hsize_t             cur_meta_block_size;  /* Current size of metadata
-                                               * allocation region left */
-    haddr_t             eoma;                 /* End of metadata
-                                               * allocated region */
-
-    /* "Small data" aggregation fields */
-    hsize_t             def_sdata_block_size;   /* "Small data"
-                                                 * allocation block size
-                                                 * (if aggregating "small
-                                                 * data") */
-    hsize_t             cur_sdata_block_size;   /* Current size of "small
-                                                 * data" allocation
-                                                 * region left */
-    haddr_t             eosda;                  /* End of "small data"
-                                                 * allocated region */
-
-    /* Metadata accumulator fields */
-    unsigned char      *meta_accum;     /* Buffer to hold the accumulated metadata */
-    haddr_t             accum_loc;      /* File location (offset) of the
-                                         * accumulated metadata */
-    size_t              accum_size;     /* Size of the accumulated
-                                         * metadata buffer used (in
-                                         * bytes) */
-    size_t              accum_buf_size; /* Size of the accumulated
-                                         * metadata buffer allocated (in
-                                         * bytes) */
-    unsigned            accum_dirty;    /* Flag to indicate that the
-                                         * accumulated metadata is dirty */
-    haddr_t             maxaddr;        /* For this file, overrides class */
-    H5FD_free_t        *fl[H5FD_MEM_NTYPES]; /* Freelist per allocation type */
-    hsize_t             maxsize;        /* Largest object on FL, or zero */
 };
 
 #ifdef __cplusplus
@@ -242,10 +261,8 @@ H5_DLL int H5FDquery(const H5FD_t *f, unsigned long *flags);
 H5_DLL haddr_t H5FDalloc(H5FD_t *file, H5FD_mem_t type, hid_t dxpl_id, hsize_t size);
 H5_DLL herr_t H5FDfree(H5FD_t *file, H5FD_mem_t type, hid_t dxpl_id,
                        haddr_t addr, hsize_t size);
-H5_DLL haddr_t H5FDrealloc(H5FD_t *file, H5FD_mem_t type, hid_t dxpl_id,
-                           haddr_t addr, hsize_t old_size, hsize_t new_size);
-H5_DLL haddr_t H5FDget_eoa(H5FD_t *file);
-H5_DLL herr_t H5FDset_eoa(H5FD_t *file, haddr_t eof);
+H5_DLL haddr_t H5FDget_eoa(H5FD_t *file, H5FD_mem_t type);
+H5_DLL herr_t H5FDset_eoa(H5FD_t *file, H5FD_mem_t type, haddr_t eoa);
 H5_DLL haddr_t H5FDget_eof(H5FD_t *file);
 H5_DLL herr_t H5FDget_vfd_handle(H5FD_t *file, hid_t fapl, void**file_handle);
 H5_DLL herr_t H5FDread(H5FD_t *file, H5FD_mem_t type, hid_t dxpl_id,
@@ -253,8 +270,10 @@ H5_DLL herr_t H5FDread(H5FD_t *file, H5FD_mem_t type, hid_t dxpl_id,
 H5_DLL herr_t H5FDwrite(H5FD_t *file, H5FD_mem_t type, hid_t dxpl_id,
                         haddr_t addr, size_t size, const void *buf);
 H5_DLL herr_t H5FDflush(H5FD_t *file, hid_t dxpl_id, unsigned closing);
+H5_DLL herr_t H5FDtruncate(H5FD_t *file, hid_t dxpl_id, hbool_t closing);
 
 #ifdef __cplusplus
 }
 #endif
 #endif
+

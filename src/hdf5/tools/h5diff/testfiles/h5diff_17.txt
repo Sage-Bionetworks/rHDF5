@@ -1,11 +1,14 @@
 
 file1     file2
 ---------------------------------------
+    x      x    /              
     x      x    /g1            
     x           /g1/d1         
     x           /g1/d2         
     x      x    /g1/dset1      
     x           /g1/dset10     
+    x           /g1/dset11     
+    x           /g1/dset12     
            x    /g1/dset2      
     x           /g1/dset3      
            x    /g1/dset4      
@@ -19,7 +22,12 @@ file1     file2
     x           /g1/fp16       
     x           /g1/fp17       
     x           /g1/fp18       
+    x           /g1/fp18_COPY  
+    x           /g1/fp19       
+    x           /g1/fp19_COPY  
     x           /g1/fp2        
+    x           /g1/fp20       
+    x           /g1/fp20_COPY  
     x           /g1/ld         
            x    /g2            
            x    /g2/dset1      
@@ -32,6 +40,8 @@ file1     file2
            x    /g2/dset8      
            x    /g2/dset9      
 
+group  : </> and </>
+0 differences found
 group  : </g1> and </g1>
 0 differences found
 dataset: </g1/dset1> and </g1/dset1>
@@ -44,5 +54,4 @@ position        dset1           dset1           difference
 [ 1 1 ]          1               1.001           0.001          
 [ 2 1 ]          0               1               1              
 5 differences found
-group  : </> and </>
-0 differences found
+EXIT CODE: 1

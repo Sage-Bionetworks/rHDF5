@@ -1,4 +1,19 @@
-! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+!****h* ROBODoc/H5R
+!
+! NAME
+!  MODULE H5R
+!
+! FILE
+!  fortran/src/H5Rff.f90
+!
+! PURPOSE
+!  This file contains Fortran interfaces for H5R functions. It includes
+!  all the functions that are independent on whether the Fortran 2003 functions
+!  are enabled or disabled.
+!
+!
+! COPYRIGHT
+! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 !   Copyright by The HDF Group.                                               *
 !   Copyright by the Board of Trustees of the University of Illinois.         *
 !   All rights reserved.                                                      *
@@ -11,468 +26,166 @@
 !   is linked from the top-level documents page.  It can also be found at     *
 !   http://hdfgroup.org/HDF5/doc/Copyright.html.  If you do not have          *
 !   access to either file, you may request a copy from help@hdfgroup.org.     *
-! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 !
+! NOTES
+!                         *** IMPORTANT ***
+!  If you add a new H5R function you must add the function name to the
+!  Windows dll file 'hdf5_fortrandll.def' in the fortran/src directory.
+!  This is needed for Windows based operating systems.
 !
-! This file contains Fortran90 interfaces for H5R functions.
-! 
-      MODULE H5R
-        USE H5GLOBAL
+!*****
 
-! If you change the value of these parameters, do not forget to change corresponding
-! values in the H5f90.h file. 
-!        INTEGER, PARAMETER :: REF_OBJ_BUF_LEN = 2 
-!        INTEGER, PARAMETER :: REF_REG_BUF_LEN = 3 
-!
-!        TYPE hobj_ref_t_f
-!             INTEGER ref(REF_OBJ_BUF_LEN)  
-!        END TYPE 
-!
-!        TYPE hdset_reg_ref_t_f
-!             INTEGER ref(REF_REG_BUF_LEN) 
-!        END TYPE 
-!
-          INTERFACE h5rcreate_f
+MODULE H5R
+  USE H5GLOBAL
 
-            MODULE PROCEDURE h5rcreate_object_f
-            MODULE PROCEDURE h5rcreate_region_f 
+  ! If you change the value of these parameters, do not forget to change corresponding
+  ! values in the H5f90.h file.
+  !        INTEGER, PARAMETER :: REF_OBJ_BUF_LEN = 2
+  !        INTEGER, PARAMETER :: REF_REG_BUF_LEN = 3
+  !
+  !        TYPE hobj_ref_t_f
+  !             INTEGER ref(REF_OBJ_BUF_LEN)
+  !        END TYPE
+  !
+  !        TYPE hdset_reg_ref_t_f
+  !             INTEGER ref(REF_REG_BUF_LEN)
+  !        END TYPE
+  !
 
-          END INTERFACE 
-          
-          INTERFACE h5rdereference_f
+  INTERFACE h5rget_region_f
 
-            MODULE PROCEDURE h5rdereference_object_f
-            MODULE PROCEDURE h5rdereference_region_f 
+     MODULE PROCEDURE h5rget_region_region_f
 
-          END INTERFACE 
-          
-          INTERFACE h5rget_region_f
+  END INTERFACE
 
-            MODULE PROCEDURE h5rget_region_region_f 
+  INTERFACE h5rget_object_type_f
 
-          END INTERFACE 
-          
-          INTERFACE h5rget_object_type_f
+     MODULE PROCEDURE h5rget_object_type_obj_f
 
-            MODULE PROCEDURE h5rget_object_type_obj_f
+  END INTERFACE
 
-          END INTERFACE 
-          
+CONTAINS
 
-        CONTAINS
-          
-!----------------------------------------------------------------------
-! Name:		h5rcreate_object_f 
+!****s* H5R/h5rget_region_region_f
 !
-! Purpose: 	Creates reference to the object
+! NAME
+!  h5rget_region_region_f
 !
-! Inputs:  
-!		loc_id		- location identifier
-!		name		- name of the object at the specified location
-! Outputs:  
-!		ref		- reference to the specified object
-!		hdferr:		- error code		
-!				 	Success:  0
-!				 	Failure: -1   
-! Optional parameters:
-!				NONE
+! PURPOSE
+!  Retrieves a dataspace with the specified region selected
 !
-! Programmer:	Elena Pourmal
-!		August 12, 1999	
+! INPUTS
+!  dset_id 	 - identifier of the dataset containing
+!                  reference to the regions
+!  ref 	         - reference to open
+! OUTPUTS
+!  space_id 	 - dataspace identifier
+!  hdferr 	 - Returns 0 if successful and -1 if fails
+! AUTHOR
+!  Elena Pourmal
+!  August 12, 1999
 !
-! Modifications: 	Explicit Fortran interfaces were added for 
-!			called C functions (it is needed for Windows
-!			port).  February 28, 2001 
+! HISTORY 	
+!  Explicit Fortran interfaces were added for
+!  called C functions (it is needed for Windows
+!  port).  February 28, 2001
 !
-! Comment:		This is a module procedure for the h5rcreate_f 
-!			subroutine.		
-!----------------------------------------------------------------------
-  
-          SUBROUTINE h5rcreate_object_f(loc_id, name, ref, hdferr) 
+! NOTES
+!  This is a module procedure for the h5rget_region_f subroutine.
 !
-!This definition is needed for Windows DLLs
-!DEC$if defined(BUILD_HDF5_DLL)
-!DEC$attributes dllexport :: h5rcreate_object_f
-!DEC$endif
-!
-            IMPLICIT NONE
-            INTEGER(HID_T), INTENT(IN) :: loc_id   ! Location identifier 
-            CHARACTER(LEN=*), INTENT(IN) :: name   ! Name of the object at location specified
-                                                   ! by loc_id identifier 
-            TYPE(hobj_ref_t_f), INTENT(OUT) :: ref   ! Object reference 
-            INTEGER, INTENT(OUT) :: hdferr         ! Error code 
+! SOURCE
+  SUBROUTINE h5rget_region_region_f(dset_id, ref, space_id, hdferr)
+    IMPLICIT NONE
+    INTEGER(HID_T), INTENT(IN) :: dset_id      ! Dataset identifier
+    TYPE(hdset_reg_ref_t_f), INTENT(IN) :: ref ! Dataset region reference
+    INTEGER(HID_T), INTENT(OUT) :: space_id    ! Space identifier
+    INTEGER, INTENT(OUT) :: hdferr             ! Error code
+!*****
+    INTEGER :: ref_f(REF_REG_BUF_LEN)          ! Local buffer to pass reference
 
-            INTEGER :: namelen                     ! Name length
-            INTEGER(HADDR_T) :: ref_f              ! Local buffer to pass reference
+    INTERFACE
+       INTEGER FUNCTION h5rget_region_region_c(dset_id, ref_f, space_id)
+         USE H5GLOBAL
+         !DEC$IF DEFINED(HDF5F90_WINDOWS)
+         !DEC$ATTRIBUTES C,reference,decorate,alias:'H5RGET_REGION_REGION_C':: h5rget_region_region_c
+         !DEC$ENDIF
+         INTEGER(HID_T), INTENT(IN) :: dset_id
+         !              INTEGER, PARAMETER :: REF_REG_BUF_LEN = 3
+         INTEGER :: ref_f(REF_REG_BUF_LEN)
+         INTEGER(HID_T), INTENT(OUT) :: space_id
+       END FUNCTION h5rget_region_region_c
+    END INTERFACE
 
-!            INTEGER, EXTERNAL :: h5fcreate_object_c
-!  Interface is needed for MS FORTRAN
-!
-            INTERFACE
-              INTEGER FUNCTION h5rcreate_object_c(ref_f, loc_id, name, namelen)
-              USE H5GLOBAL
-              !DEC$IF DEFINED(HDF5F90_WINDOWS)
-              !MS$ATTRIBUTES C,reference,alias:'_H5RCREATE_OBJECT_C':: h5rcreate_object_c
-              !DEC$ENDIF
-              !DEC$ATTRIBUTES reference :: name 
-              INTEGER(HADDR_T) :: ref_f
-              INTEGER(HID_T), INTENT(IN) :: loc_id  
-              CHARACTER(LEN=*), INTENT(IN) :: name
-              INTEGER :: namelen
-              END FUNCTION h5rcreate_object_c
-            END INTERFACE
+    ref_f = ref%ref
+    hdferr = h5rget_region_region_c(dset_id, ref_f, space_id )
 
-            namelen = LEN(name)
-            ref_f = 0
-            hdferr = h5rcreate_object_c(ref_f, loc_id, name, namelen )
-            ref%ref = ref_f
-        
-          END SUBROUTINE h5rcreate_object_f
-          
-!----------------------------------------------------------------------
-! Name:		h5rcreate_region_f 
-!
-! Purpose: 	Creates r eference to the dataset region
-!
-! Inputs:  
-!		loc_id		- location identifier
-!		name		- name of the dataset at the specified location
-!		space_id	- dataspace identifier that describes selected region
-! Outputs:  
-!		ref		- reference to the dataset region
-!		hdferr:		- error code		
-!				 	Success:  0
-!				 	Failure: -1   
-! Optional parameters:
-!				NONE
-!
-! Programmer:	Elena Pourmal
-!		August 12, 1999	
-!
-! Modifications: 	Explicit Fortran interfaces were added for 
-!			called C functions (it is needed for Windows
-!			port).  February 28, 2001 
-!
-! Comment:		This is a module procedure for the h5rcreate_f 
-!			subroutine.		
-!----------------------------------------------------------------------
-  
-          SUBROUTINE h5rcreate_region_f(loc_id, name, space_id, ref, hdferr) 
-!
-!This definition is needed for Windows DLLs
-!DEC$if defined(BUILD_HDF5_DLL)
-!DEC$attributes dllexport :: h5rcreate_region_f
-!DEC$endif
-!
-            IMPLICIT NONE
-            INTEGER(HID_T), INTENT(IN) :: loc_id   ! Location identifier 
-            CHARACTER(LEN=*), INTENT(IN) :: name   ! Name of the dataset at location specified
-                                                   ! by loc_id identifier 
-            INTEGER(HID_T), INTENT(IN) :: space_id ! Dataset's dataspace identifier 
-            TYPE(hdset_reg_ref_t_f), INTENT(OUT) :: ref ! Dataset region reference 
-            INTEGER, INTENT(OUT) :: hdferr         ! Error code 
+  END SUBROUTINE h5rget_region_region_f
 
-            INTEGER :: namelen                     ! Name length
-            INTEGER :: ref_f(REF_REG_BUF_LEN)          ! Local buffer to pass reference
+!****s* H5R/h5rget_object_type_obj_f
+!
+! NAME
+!  h5rget_object_type_obj_f
+!
+! PURPOSE
+!  Retrieves the type of object that an object reference points to.
+!
+! INPUTS
+!  dset_id 	 - identifier of the dataset containing
+!                  reference to the objects
+!  ref 	         - reference to open
+! OUTPUTS
+!  obj_type 	 - object_type, possible values:
+!                    H5G_UNKNOWN_F     (-1)
+!                    H5G_GROUP_F        0
+!                    H5G_DATASET_F      1
+!                    H5G_TYPE_F         2
+!                    H5G_LINK_F         3
+!  hdferr 	 - Returns 0 if successful and -1 if fails
+!
+! AUTHOR
+!  Elena Pourmal
+!  August 12, 1999
+!
+! HISTORY
+!  Explicit Fortran interfaces were added for
+!  called C functions (it is needed for Windows
+!  port).  February 28, 2001
+!
+! NOTES
+!  This is a module procedure for the h5rget_object_type_f
+!  subroutine.
+! SOURCE
+  SUBROUTINE h5rget_object_type_obj_f(dset_id, ref, obj_type, hdferr)
+    IMPLICIT NONE
+    INTEGER(HID_T), INTENT(IN) :: dset_id   ! Dataset identifier
+    TYPE(hobj_ref_t_f), INTENT(IN) :: ref   ! Object reference
+    INTEGER, INTENT(OUT) :: obj_type     ! Object type
+                                         !  H5G_UNKNOWN_F     (-1)
+                                         !  H5G_GROUP_F        0
+                                         !  H5G_DATASET_F      1
+                                         !  H5G_TYPE_F         2
+                                         !  H5G_LINK_F         3
+    INTEGER, INTENT(OUT) :: hdferr       ! Error code
+!*****
+    INTEGER(HADDR_T) :: ref_f          ! Local buffer to pass reference
 
-!            INTEGER, EXTERNAL :: h5fcreate_region_c
-!  Interface is needed for MS FORTRAN
-!
-            INTERFACE
-              INTEGER FUNCTION h5rcreate_region_c(ref_f, loc_id, name, namelen, space_id)
-              USE H5GLOBAL
-              !DEC$IF DEFINED(HDF5F90_WINDOWS)
-              !MS$ATTRIBUTES C,reference,alias:'_H5RCREATE_REGION_C':: h5rcreate_region_c
-              !DEC$ENDIF
-              !DEC$ATTRIBUTES reference :: name 
-!              INTEGER, PARAMETER :: REF_REG_BUF_LEN = 3 
-              INTEGER :: ref_f(REF_REG_BUF_LEN)
-              INTEGER(HID_T), INTENT(IN) :: loc_id  
-              CHARACTER(LEN=*), INTENT(IN) :: name
-              INTEGER :: namelen
-              INTEGER(HID_T), INTENT(IN) :: space_id 
-              END FUNCTION h5rcreate_region_c
-            END INTERFACE
+    INTERFACE
+       INTEGER FUNCTION h5rget_object_type_obj_c(dset_id, ref_f, obj_type)
+         USE H5GLOBAL
+         !DEC$IF DEFINED(HDF5F90_WINDOWS)
+         !DEC$ATTRIBUTES C,reference,decorate,alias:'H5RGET_OBJECT_TYPE_OBJ_C':: h5rget_object_type_obj_c
+         !DEC$ENDIF
+         !              INTEGER, PARAMETER :: REF_OBJ_BUF_LEN = 2
+         INTEGER(HID_T), INTENT(IN) :: dset_id
+         INTEGER(HADDR_T) :: ref_f
+         INTEGER, INTENT(OUT) :: obj_type
+       END FUNCTION h5rget_object_type_obj_c
+    END INTERFACE
 
-            namelen = LEN(name)
-            ref_f = 0
-            hdferr = h5rcreate_region_c(ref_f, loc_id, name, namelen, space_id )
-            ref%ref = ref_f
+    ref_f = ref%ref
+    hdferr = h5rget_object_type_obj_c(dset_id, ref_f, obj_type )
 
-          END SUBROUTINE h5rcreate_region_f
-          
-!----------------------------------------------------------------------
-! Name:		h5rdereference_object_f
-!
-! Purpose: 	Opens the HDF5 object referenced
-!
-! Inputs:  
-!		dset_id		- identifier of the dataset containing 
-!				  reference		
-!		ref		- reference to open
-! Outputs:  
-!		obj_id		- object_identifier
-!		hdferr:		- error code		
-!				 	Success:  0
-!				 	Failure: -1   
-! Optional parameters:
-!				NONE
-!
-! Programmer:	Elena Pourmal
-!		August 12, 1999	
-!
-! Modifications: 	Explicit Fortran interfaces were added for 
-!			called C functions (it is needed for Windows
-!			port).  February 28, 2001 
-!
-! Comment:		This is a module procedure for the h5rdereference_f 
-!			subroutine.		
-!----------------------------------------------------------------------
-  
-          
-          SUBROUTINE h5rdereference_object_f(dset_id, ref, obj_id, hdferr) 
-!
-!This definition is needed for Windows DLLs
-!DEC$if defined(BUILD_HDF5_DLL)
-!DEC$attributes dllexport :: h5rdereference_object_f
-!DEC$endif
-!
-            IMPLICIT NONE
-            INTEGER(HID_T), INTENT(IN) :: dset_id   ! Dataset identifier 
-            TYPE(hobj_ref_t_f), INTENT(IN) :: ref   ! Object reference 
-            INTEGER(HID_T), INTENT(OUT) :: obj_id   ! Object identifier 
-            INTEGER, INTENT(OUT) :: hdferr         ! Error code 
+  END SUBROUTINE h5rget_object_type_obj_f
 
-            INTEGER :: ref_type     ! Reference type 
-            INTEGER(HADDR_T) :: ref_f          ! Local buffer to pass reference
-
-!            INTEGER, EXTERNAL :: h5h5rdereference_object_c
-!  Interface is needed for MS FORTRAN
-!
-            INTERFACE
-              INTEGER FUNCTION h5rdereference_object_c(dset_id, ref_f, obj_id)
-              USE H5GLOBAL
-              !DEC$IF DEFINED(HDF5F90_WINDOWS)
-           !MS$ATTRIBUTES C,reference,alias:'_H5RDEREFERENCE_OBJECT_C':: h5rdereference_object_c
-              !DEC$ENDIF
-!              INTEGER, PARAMETER :: REF_OBJ_BUF_LEN = 2
-              INTEGER(HID_T), INTENT(IN) :: dset_id  
-              INTEGER(HADDR_T) :: ref_f
-              INTEGER(HID_T), INTENT(OUT) :: obj_id 
-              END FUNCTION h5rdereference_object_c
-            END INTERFACE
-
-            ref_f = ref%ref
-            hdferr = h5rdereference_object_c(dset_id, ref_f, obj_id )
-
-          END SUBROUTINE h5rdereference_object_f
-          
-!----------------------------------------------------------------------
-! Name:		h5rdereference_region_f
-!
-! Purpose: 	Opens the dataset region
-!
-! Inputs:  
-!		dset_id		- identifier of the dataset containing 
-!				  reference to teh regions		
-!		ref		- reference to open
-! Outputs:  
-!		obj_id		- dataspace identifier
-!		hdferr:		- error code		
-!				 	Success:  0
-!				 	Failure: -1   
-! Optional parameters:
-!				NONE
-!
-! Programmer:	Elena Pourmal
-!		August 12, 1999	
-!
-! Modifications: 	Explicit Fortran interfaces were added for 
-!			called C functions (it is needed for Windows
-!			port).  February 28, 2001 
-!
-! Comment:		This is a module procedure for the h5rdereference_f 
-!			subroutine.		
-!----------------------------------------------------------------------
-  
-          
-          SUBROUTINE h5rdereference_region_f(dset_id, ref, obj_id, hdferr) 
-!
-!This definition is needed for Windows DLLs
-!DEC$if defined(BUILD_HDF5_DLL)
-!DEC$attributes dllexport :: h5rdereference_region_f
-!DEC$endif
-!
-            IMPLICIT NONE
-            INTEGER(HID_T), INTENT(IN) :: dset_id   ! Dataset identifier 
-            TYPE(hdset_reg_ref_t_f), INTENT(IN) :: ref   ! Object reference 
-            INTEGER(HID_T), INTENT(OUT) :: obj_id   ! Dataspace identifier 
-            INTEGER, INTENT(OUT) :: hdferr          ! Error code 
-
-            INTEGER :: ref_type      ! Reference type 
-            INTEGER :: ref_f(REF_REG_BUF_LEN)          ! Local buffer to pass reference
-
-!            INTEGER, EXTERNAL :: h5rdereference_region_c
-!  Interface is needed for MS FORTRAN
-!
-            INTERFACE
-              INTEGER FUNCTION h5rdereference_region_c(dset_id, ref_f, obj_id)
-              USE H5GLOBAL
-              !DEC$IF DEFINED(HDF5F90_WINDOWS)
-           !MS$ATTRIBUTES C,reference,alias:'_H5RDEREFERENCE_REGION_C':: h5rdereference_region_c
-              !DEC$ENDIF
-              INTEGER(HID_T), INTENT(IN) :: dset_id  
-!              INTEGER, PARAMETER :: REF_REG_BUF_LEN = 3 
-              INTEGER :: ref_f(REF_REG_BUF_LEN)
-              INTEGER(HID_T), INTENT(OUT) :: obj_id 
-              END FUNCTION h5rdereference_region_c
-            END INTERFACE
-
-            ref_type = H5R_DATASET_REGION_F
-            ref_f = ref%ref
-            hdferr = h5rdereference_region_c(dset_id, ref_f, obj_id )
-
-          END SUBROUTINE h5rdereference_region_f
-          
-!----------------------------------------------------------------------
-! Name:		h5rget_region_region_f
-!
-! Purpose: 	Retrieves a dataspace with the specified region selected
-!
-! Inputs:  
-!		dset_id		- identifier of the dataset containing 
-!				  reference to the regions		
-!		ref		- reference to open
-! Outputs:  
-!		space_id	- dataspace identifier
-!		hdferr:		- error code		
-!				 	Success:  0
-!				 	Failure: -1   
-! Optional parameters:
-!				NONE
-!
-! Programmer:	Elena Pourmal
-!		August 12, 1999	
-!
-! Modifications: 	Explicit Fortran interfaces were added for 
-!			called C functions (it is needed for Windows
-!			port).  February 28, 2001 
-!
-! Comment:		This is a module procedure for the h5rget_region_f 
-!			subroutine.		
-!----------------------------------------------------------------------
-  
-          
-          
-          SUBROUTINE h5rget_region_region_f(dset_id, ref, space_id, hdferr) 
-!
-!This definition is needed for Windows DLLs
-!DEC$if defined(BUILD_HDF5_DLL)
-!DEC$attributes dllexport :: h5rget_region_region_f
-!DEC$endif
-!
-            IMPLICIT NONE
-            INTEGER(HID_T), INTENT(IN) :: dset_id   ! Dataset identifier 
-            TYPE(hdset_reg_ref_t_f), INTENT(IN) :: ref   ! Dataset region reference 
-            INTEGER(HID_T), INTENT(OUT) :: space_id   ! Space identifier 
-            INTEGER, INTENT(OUT) :: hdferr          ! Error code 
-            INTEGER :: ref_f(REF_REG_BUF_LEN)          ! Local buffer to pass reference
-
-!            INTEGER, EXTERNAL :: h5rget_region_region_c
-!  Interface is needed for MS FORTRAN
-!
-            INTERFACE
-              INTEGER FUNCTION h5rget_region_region_c(dset_id, ref_f, space_id)
-              USE H5GLOBAL
-              !DEC$IF DEFINED(HDF5F90_WINDOWS)
-           !MS$ATTRIBUTES C,reference,alias:'_H5RGET_REGION_REGION_C':: h5rget_region_region_c
-              !DEC$ENDIF
-              INTEGER(HID_T), INTENT(IN) :: dset_id  
-!              INTEGER, PARAMETER :: REF_REG_BUF_LEN = 3 
-              INTEGER :: ref_f(REF_REG_BUF_LEN)
-              INTEGER(HID_T), INTENT(OUT) :: space_id 
-              END FUNCTION h5rget_region_region_c
-            END INTERFACE
-
-            ref_f = ref%ref
-            hdferr = h5rget_region_region_c(dset_id, ref_f, space_id )
-
-          END SUBROUTINE h5rget_region_region_f
-          
-!----------------------------------------------------------------------
-! Name:		h5rget_object_type_obj_f
-!
-! Purpose: 	Retrieves the type of object that an object reference points to.	
-!
-! Inputs:  
-!		dset_id		- identifier of the dataset containing 
-!				  reference to the objects
-!		ref		- reference to open
-! Outputs:  
-!		obj_type	- object_type, possible values:
-!					  H5G_UNKNOWN_F     (-1)
-!					  H5G_LINK_F         0
-!					  H5G_GROUP_F        1
-!					  H5G_DATASET_F      2
-! 					  H5G_TYPE_F         3
-!
-!		hdferr:		- error code		
-!				 	Success:  0
-!				 	Failure: -1   
-! Optional parameters:
-!				NONE
-!
-! Programmer:	Elena Pourmal
-!		August 12, 1999	
-!
-! Modifications: 	Explicit Fortran interfaces were added for 
-!			called C functions (it is needed for Windows
-!			port).  February 28, 2001 
-!
-! Comment:		This is a module procedure for the h5rget_object_type_f 
-!			subroutine.		
-!----------------------------------------------------------------------
-  
-
-          SUBROUTINE h5rget_object_type_obj_f(dset_id, ref, obj_type, hdferr) 
-!
-!This definition is needed for Windows DLLs
-!DEC$if defined(BUILD_HDF5_DLL)
-!DEC$attributes dllexport :: h5rget_object_type_obj_f
-!DEC$endif
-!
-            IMPLICIT NONE
-            INTEGER(HID_T), INTENT(IN) :: dset_id   ! Dataset identifier 
-            TYPE(hobj_ref_t_f), INTENT(IN) :: ref   ! Object reference 
-            INTEGER, INTENT(OUT) :: obj_type   ! Object type  
-                                               !  H5G_UNKNOWN_F     (-1)
-                                               !  H5G_LINK_F         0
-                                               !  H5G_GROUP_F        1
-                                               !  H5G_DATASET_F      2
-                                               !  H5G_TYPE_F         3
-
-            INTEGER, INTENT(OUT) :: hdferr          ! Error code 
-            INTEGER(HADDR_T) :: ref_f          ! Local buffer to pass reference
-
-!            INTEGER, EXTERNAL :: h5rget_object_type_obj_c
-!  Interface is needed for MS FORTRAN
-!
-            INTERFACE
-              INTEGER FUNCTION h5rget_object_type_obj_c(dset_id, ref_f, obj_type)
-              USE H5GLOBAL
-              !DEC$IF DEFINED(HDF5F90_WINDOWS)
-           !MS$ATTRIBUTES C,reference,alias:'_H5RGET_OBJECT_TYPE_OBJ_C':: h5rget_object_type_obj_c
-              !DEC$ENDIF
-!              INTEGER, PARAMETER :: REF_OBJ_BUF_LEN = 2
-              INTEGER(HID_T), INTENT(IN) :: dset_id  
-              INTEGER(HADDR_T) :: ref_f
-              INTEGER, INTENT(OUT) :: obj_type 
-              END FUNCTION h5rget_object_type_obj_c
-            END INTERFACE
-
-            ref_f = ref%ref
-            hdferr = h5rget_object_type_obj_c(dset_id, ref_f, obj_type )
-
-          END SUBROUTINE h5rget_object_type_obj_f
-
-      END MODULE H5R
+END MODULE H5R

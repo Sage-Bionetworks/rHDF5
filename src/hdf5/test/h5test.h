@@ -25,11 +25,6 @@
 #include "hdf5.h"
 #include "H5private.h"
 
-#ifdef H5_STDC_HEADERS
-#   include <signal.h>
-#   include <stdarg.h>
-#endif
-
 /*
  * Predefined test verbosity levels.
  *
@@ -61,11 +56,16 @@
  * Verbose queries
  * Only None needs an exact match.  The rest are at least as much.
  */
-#define VERBOSE_NONE	(GetTestVerbosity()==VERBO_NONE)
-#define VERBOSE_DEF	(GetTestVerbosity()>=VERBO_DEF)
-#define VERBOSE_LO	(GetTestVerbosity()>=VERBO_LO)
-#define VERBOSE_MED	(GetTestVerbosity()>=VERBO_MED)
-#define VERBOSE_HI	(GetTestVerbosity()>=VERBO_HI)
+
+/* A macro version of HDGetTestVerbosity(). */
+/* Should be used internally by the libtest.a only. */
+#define HDGetTestVerbosity() (TestVerbosity)
+
+#define VERBOSE_NONE	(HDGetTestVerbosity()==VERBO_NONE)
+#define VERBOSE_DEF	(HDGetTestVerbosity()>=VERBO_DEF)
+#define VERBOSE_LO	(HDGetTestVerbosity()>=VERBO_LO)
+#define VERBOSE_MED	(HDGetTestVerbosity()>=VERBO_MED)
+#define VERBOSE_HI	(HDGetTestVerbosity()>=VERBO_HI)
 
 /*
  * Test controls definitions.
@@ -78,9 +78,9 @@
  * This contains the filename prefix specificied as command line option for
  * the parallel test files.
  */
-extern char *paraprefix;
+H5TEST_DLLVAR char *paraprefix;
 #ifdef H5_HAVE_PARALLEL
-extern MPI_Info h5_io_info_g;         /* MPI INFO object for IO */
+H5TEST_DLLVAR MPI_Info h5_io_info_g;         /* MPI INFO object for IO */
 #endif
 
 /*
@@ -99,19 +99,41 @@ extern MPI_Info h5_io_info_g;         /* MPI INFO object for IO */
  * the H5_FAILED() macro is invoked automatically when an API function fails.
  */
 #define TESTING(WHAT)	{printf("Testing %-62s",WHAT); fflush(stdout);}
+#define TESTING_2(WHAT)	{printf(" Testing %-62s",WHAT); fflush(stdout);}
 #define PASSED()	{puts(" PASSED");fflush(stdout);}
 #define H5_FAILED()	{puts("*FAILED*");fflush(stdout);}
+#define H5_WARNING()	{puts("*WARNING*");fflush(stdout);}
 #define SKIPPED()	{puts(" -SKIP-");fflush(stdout);}
 #define TEST_ERROR      {H5_FAILED(); AT(); goto error;}
+#define STACK_ERROR     {H5Eprint2(H5E_DEFAULT, stdout); goto error;}
+#define FAIL_STACK_ERROR {H5_FAILED(); AT(); H5Eprint2(H5E_DEFAULT, stdout); \
+    goto error;}
+#define FAIL_PUTS_ERROR(s) {H5_FAILED(); AT(); puts(s); goto error;}
 
 /*
  * Alarm definitions to wait up (terminate) a test that runs too long.
  */
-#define alarm_seconds	1200	/* default is 20 minutes */
-#define ALARM_ON	HDalarm(alarm_seconds)
+#define H5_ALARM_SEC	1200	/* default is 20 minutes */
+#define ALARM_ON	TestAlarmOn()
 #define ALARM_OFF	HDalarm(0)
-/* set alarms to N seconds if N > 0, else use default alarm_seconds. */
-#define ALARM_SET(N)	HDalarm((N)>0 ? N : alarm_seconds)
+
+/*
+ * The methods to compare the equality of floating-point values:
+ *    1. XXX_ABS_EQUAL - check if the difference is smaller than the
+ *       Epsilon value.  The Epsilon values, FLT_EPSILON, DBL_EPSILON,
+ *       and LDBL_EPSILON, are defined by compiler in float.h.
+ *    2. XXX_REL_EQUAL - check if the relative difference is smaller than a
+ *       predefined value M.  See if two values are relatively equal.
+ *       It's the test's responsibility not to pass in the value 0, which
+ *       may cause the equation to fail.
+ */
+#define FLT_ABS_EQUAL(X,Y)	((float)fabs(X-Y)<FLT_EPSILON)
+#define DBL_ABS_EQUAL(X,Y)	(fabs(X-Y)<DBL_EPSILON)
+#define LDBL_ABS_EQUAL(X,Y)	(fabsl(X-Y)<LDBL_EPSILON)
+
+#define FLT_REL_EQUAL(X,Y,M)    (fabsf((Y-X)/X<M)
+#define DBL_REL_EQUAL(X,Y,M)    (fabs((Y-X)/X)<M)
+#define LDBL_REL_EQUAL(X,Y,M)    (fabsl((Y-X)/X)<M)
 
 #ifdef __cplusplus
 extern "C" {
@@ -123,11 +145,13 @@ H5TEST_DLL char *h5_fixname(const char *base_name, hid_t fapl, char *fullname,
 		 size_t size);
 H5TEST_DLL hid_t h5_fileaccess(void);
 H5TEST_DLL void h5_no_hwconv(void);
-H5TEST_DLL char *h5_rmprefix(const char *filename);
+H5TEST_DLL const char *h5_rmprefix(const char *filename);
 H5TEST_DLL void h5_reset(void);
 H5TEST_DLL void h5_show_hostname(void);
-H5TEST_DLL h5_stat_size_t h5_get_file_size(const char *filename);
+H5TEST_DLL h5_stat_size_t h5_get_file_size(const char *filename, hid_t fapl);
 H5TEST_DLL int print_func(const char *format, ...);
+H5TEST_DLL int h5_make_local_copy(const char *origfilename, const char *local_copy_name);
+H5TEST_DLL herr_t h5_verify_cached_stabs(const char *base_name[], hid_t fapl);
 
 /* Routines for operating on the list of tests (for the "all in one" tests) */
 H5TEST_DLL void TestUsage(void);
@@ -145,13 +169,18 @@ H5TEST_DLL int  SetTestVerbosity(int newval);
 H5TEST_DLL int  GetTestSummary(void);
 H5TEST_DLL int  GetTestCleanup(void);
 H5TEST_DLL int  SetTestNoCleanup(void);
+H5TEST_DLL int  GetTestExpress(void);
+H5TEST_DLL int  SetTestExpress(int newval);
 H5TEST_DLL void ParseTestVerbosity(char *argv);
 H5TEST_DLL int  GetTestNumErrs(void);
 H5TEST_DLL void  IncTestNumErrs(void);
 H5TEST_DLL const void *GetTestParameters(void);
 H5TEST_DLL int  TestErrPrintf(const char *format, ...);
 H5TEST_DLL void SetTest(const char *testname, int action);
-
+H5TEST_DLL void TestAlarmOn(void);
+H5TEST_DLL void TestAlarmOff(void);
+H5TEST_DLL void PrintErrorStackOn(void);
+H5TEST_DLL void PrintErrorStackOff(void);
 
 #ifdef H5_HAVE_FILTER_SZIP
 H5TEST_DLL int h5_szip_can_encode(void);
@@ -162,6 +191,9 @@ H5TEST_DLL int h5_set_info_object(void);
 H5TEST_DLL void h5_dump_info_object(MPI_Info info);
 H5TEST_DLL char* getenv_all(MPI_Comm comm, int root, const char* name);
 #endif
+
+/* Extern global variables */
+H5TEST_DLLVAR int TestVerbosity;
 
 #ifdef __cplusplus
 }

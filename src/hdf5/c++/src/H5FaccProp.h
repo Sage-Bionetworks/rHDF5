@@ -67,6 +67,14 @@ class H5_DLLCPP FileAccPropList : public PropList {
 	void setSplit( FileAccPropList& meta_plist, FileAccPropList& raw_plist,
 	     const H5std_string& meta_ext, const H5std_string& raw_ext ) const;
 
+#ifdef H5_HAVE_STREAM // for Stream Virtual File Driver
+	// Modifies this file access property list to use the Stream driver.
+	void setStream(H5FD_stream_fapl_t &fapl) const;
+
+	// Retrieves the streaming I/O driver settings
+	H5FD_stream_fapl_t getStream() const;
+#endif
+
 	// Sets the maximum size of the data sieve buffer.
 	void setSieveBufSize(size_t bufsize) const;
 
@@ -115,7 +123,7 @@ class H5_DLLCPP FileAccPropList : public PropList {
 	// Returns garbage collecting references setting.
 	unsigned getGcReferences() const;
 
-	// Returns this class name
+	///\brief Returns this class name
 	virtual H5std_string fromClass () const { return("FileAccPropList"); }
 
 	// Copy constructor: creates a copy of a FileAccPropList object.

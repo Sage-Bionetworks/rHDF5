@@ -1,4 +1,16 @@
-! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+!****h* root/fortran/test/fflush1.f90
+!
+! NAME
+!  FFLUSH1EXAMPLE
+!
+! FUNCTION
+!  This is the first half of a two-part test that makes sure
+!  that a file can be read after an application crashes as long
+!  as the file was flushed first.  We simulate by exit the 
+!  the program using stop statement
+!
+! COPYRIGHT
+! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 !   Copyright by The HDF Group.                                               *
 !   Copyright by the Board of Trustees of the University of Illinois.         *
 !   All rights reserved.                                                      *
@@ -11,23 +23,18 @@
 !   is linked from the top-level documents page.  It can also be found at     *
 !   http://hdfgroup.org/HDF5/doc/Copyright.html.  If you do not have          *
 !   access to either file, you may request a copy from help@hdfgroup.org.     *
-! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 !
-!
-! Purpose:	This is the first half of a two-part test that makes sure
-!		that a file can be read after an application crashes as long
-!		as the file was flushed first.  We simulate by exit the 
-!              the program using stop statement
-!
+!*****
 
      PROGRAM FFLUSH1EXAMPLE
 
-     USE HDF5 ! This module contains all necessary modules 
-        
+     USE HDF5 ! This module contains all necessary modules
+
      IMPLICIT NONE
 
      !
-     !the respective filename is "fflush1.h5" 
+     !the respective filename is "fflush1.h5"
      !
      CHARACTER(LEN=7), PARAMETER :: filename = "fflush1"
      CHARACTER(LEN=80) :: fix_filename
@@ -42,47 +49,41 @@
      !
      ! File identifiers
      !
-     INTEGER(HID_T) :: file_id 
-     
+     INTEGER(HID_T) :: file_id
+
      !
      ! Group identifier
      !
-     INTEGER(HID_T) :: gid 
+     INTEGER(HID_T) :: gid
 
      !
      ! dataset identifier
      !
      INTEGER(HID_T) :: dset_id
- 
+
      !
      ! data space identifier
      !
      INTEGER(HID_T) :: dataspace
- 
      !
-     ! data type identifier
-     !
-     INTEGER(HID_T) :: dtype_id
-
-     ! 
      !The dimensions for the dataset.
      !
      INTEGER(HSIZE_T), DIMENSION(2) :: dims = (/NX,NY/)
 
      !
-     !flag to check operation success 
-     !         
+     !flag to check operation success
+     !
      INTEGER     ::   error
 
      !
-     !general purpose integer 
-     !         
+     !general purpose integer
+     !
      INTEGER     ::   i, j, total_error = 0
 
      !
-     !data buffers 
-     !         
-     INTEGER, DIMENSION(NX,NY) :: data_in, data_out
+     !data buffers
+     !
+     INTEGER, DIMENSION(NX,NY) :: data_in
      INTEGER(HSIZE_T), DIMENSION(2) :: data_dims
      data_dims(1) = NX
      data_dims(2) = NY
@@ -90,7 +91,7 @@
      !
      !Initialize FORTRAN predifined datatypes
      !
-     CALL h5open_f(error) 
+     CALL h5open_f(error)
           CALL check("h5open_f",error,total_error)
 
      !
@@ -104,40 +105,40 @@
 
      !
      !Create file "fflush1.h5" using default properties.
-     ! 
+     !
           CALL h5_fixname_f(filename, fix_filename, H5P_DEFAULT_F, error)
           if (error .ne. 0) then
               write(*,*) "Cannot modify filename"
-              stop
+              CALL h5_exit_f (1)
           endif
      CALL h5fcreate_f(fix_filename, H5F_ACC_TRUNC_F, file_id, error)
           CALL check("h5fcreate_f",error,total_error)
 
      !
      !Create group "/G" inside file "fflush1.h5".
-     ! 
+     !
      CALL h5gcreate_f(file_id, "/G", gid, error)
           CALL check("h5gcreate_f",error,total_error)
 
      !
-     !Create data space for the dataset. 
+     !Create data space for the dataset.
      !
      CALL h5screate_simple_f(RANK, dims, dataspace, error)
           CALL check("h5screate_simple_f",error,total_error)
 
      !
      !Create dataset "/D" inside file "fflush1.h5".
-     ! 
+     !
      CALL h5dcreate_f(file_id, "/D", H5T_NATIVE_INTEGER, dataspace, &
                       dset_id, error)
           CALL check("h5dcreate_f",error,total_error)
- 
+
      !
      ! Write data_in to the dataset
      !
      CALL h5dwrite_f(dset_id, H5T_NATIVE_INTEGER, data_in, data_dims, error)
           CALL check("h5dwrite_f",error,total_error)
-  
+
      !
      !flush and exit without closing the library
      !

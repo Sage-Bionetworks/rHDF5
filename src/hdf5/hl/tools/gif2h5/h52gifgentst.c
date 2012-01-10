@@ -16,7 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "hdf5.h"
-#include "H5IM.h"
+#include "H5IMpublic.h"
 
 /*-------------------------------------------------------------------------
  * Program: h52gifgentst
@@ -45,7 +45,7 @@
  *-------------------------------------------------------------------------
  */
 
-int main(void) 
+int main(void)
 {
     hid_t         fid;
     int           i, j, n, space;
@@ -55,10 +55,10 @@ int main(void)
     hsize_t       width  = WIDTH;
     hsize_t       height = HEIGHT;
 
-    
+
     /* create a file  */
     if ((fid = H5Fcreate(FILENAME, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT))<0)
-        return 1;
+        return EXIT_FAILURE;
 
     /* create an image */
     space = WIDTH*HEIGHT / PAL_ENTRIES;
@@ -70,15 +70,15 @@ int main(void)
             n++;
             j=0;
         }
-        
+
     }
 
     /* make the image */
     if (H5IMmake_image_8bit( fid, IMAGE1_NAME, width, height, buf )<0)
-        return 1;
+        return EXIT_FAILURE;
 
    /*-------------------------------------------------------------------------
-    * define a palette, blue to red tones 
+    * define a palette, blue to red tones
     *-------------------------------------------------------------------------
     */
     for ( i=0, n=0; i<PAL_ENTRIES*3; i+=3, n++)
@@ -87,18 +87,18 @@ int main(void)
         pal[i+1]=0;      /* green */
         pal[i+2]=255-n;  /* blue */
     }
-    
+
     /* make a palette */
     if (H5IMmake_palette( fid, PAL_NAME, pal_dims, pal )<0)
-        return 1;
-    
+        return EXIT_FAILURE;
+
     /* attach the palette to the image */
     if (H5IMlink_palette( fid, IMAGE1_NAME, PAL_NAME )<0)
-        return 1;
-    
+        return EXIT_FAILURE;
+
     if(H5Fclose(fid)<0)
-        return 1;
-    
-    return 0;
+        return EXIT_FAILURE;
+
+    return EXIT_SUCCESS;
 }
 

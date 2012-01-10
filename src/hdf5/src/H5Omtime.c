@@ -19,28 +19,25 @@
  * Purpose:	The object modification time message.
  */
 
-#define H5O_PACKAGE	/*suppress error about including H5Opkg	  */
+#define H5O_PACKAGE		/*suppress error about including H5Opkg	  */
 
-#include "H5private.h"
-#include "H5Eprivate.h"
-#include "H5FLprivate.h"	/*Free Lists	  */
-#include "H5MMprivate.h"
-#include "H5Opkg.h"             /* Object header functions                  */
-
-#if defined (WIN32) && !defined (__MWERKS__)
-#include <sys/types.h>
-#include <sys/timeb.h>
-#endif
+#include "H5private.h"		/* Generic Functions			*/
+#include "H5Eprivate.h"		/* Error handling		  	*/
+#include "H5FLprivate.h"	/* Free lists                           */
+#include "H5MMprivate.h"	/* Memory management			*/
+#include "H5Opkg.h"             /* Object headers			*/
 
 
-static void *H5O_mtime_new_decode(H5F_t *f, hid_t dxpl_id, const uint8_t *p);
-static herr_t H5O_mtime_new_encode(H5F_t *f, uint8_t *p, const void *_mesg);
-static size_t H5O_mtime_new_size(const H5F_t *f, const void *_mesg);
+static void *H5O_mtime_new_decode(H5F_t *f, hid_t dxpl_id, H5O_t *open_oh,
+    unsigned mesg_flags, unsigned *ioflags, const uint8_t *p);
+static herr_t H5O_mtime_new_encode(H5F_t *f, hbool_t disable_shared, uint8_t *p, const void *_mesg);
+static size_t H5O_mtime_new_size(const H5F_t *f, hbool_t disable_shared, const void *_mesg);
 
-static void *H5O_mtime_decode(H5F_t *f, hid_t dxpl_id, const uint8_t *p);
-static herr_t H5O_mtime_encode(H5F_t *f, uint8_t *p, const void *_mesg);
-static void *H5O_mtime_copy(const void *_mesg, void *_dest, unsigned update_flags);
-static size_t H5O_mtime_size(const H5F_t *f, const void *_mesg);
+static void *H5O_mtime_decode(H5F_t *f, hid_t dxpl_id, H5O_t *open_oh,
+    unsigned mesg_flags, unsigned *ioflags, const uint8_t *p);
+static herr_t H5O_mtime_encode(H5F_t *f, hbool_t disable_shared, uint8_t *p, const void *_mesg);
+static void *H5O_mtime_copy(const void *_mesg, void *_dest);
+static size_t H5O_mtime_size(const H5F_t *f, hbool_t disable_shared, const void *_mesg);
 static herr_t H5O_mtime_reset(void *_mesg);
 static herr_t H5O_mtime_free(void *_mesg);
 static herr_t H5O_mtime_debug(H5F_t *f, hid_t dxpl_id, const void *_mesg, FILE *stream,
@@ -51,6 +48,7 @@ const H5O_msg_class_t H5O_MSG_MTIME[1] = {{
     H5O_MTIME_ID,		/*message id number		*/
     "mtime",			/*message name for debugging	*/
     sizeof(time_t),		/*native message size		*/
+    0,				/* messages are sharable?       */
     H5O_mtime_decode,		/*decode message		*/
     H5O_mtime_encode,		/*encode message		*/
     H5O_mtime_copy,		/*copy the native value		*/
@@ -59,8 +57,13 @@ const H5O_msg_class_t H5O_MSG_MTIME[1] = {{
     H5O_mtime_free,		/* free method			*/
     NULL,		        /* file delete method		*/
     NULL,			/* link method			*/
-    NULL,			/*get share method		*/
     NULL,			/*set share method		*/
+    NULL,		    	/*can share method		*/
+    NULL,			/* pre copy native value to file */
+    NULL,			/* copy native value to file    */
+    NULL,			/* post copy native value to file    */
+    NULL,			/* get creation index		*/
+    NULL,			/* set creation index		*/
     H5O_mtime_debug		/*debug the message		*/
 }};
 
@@ -70,6 +73,7 @@ const H5O_msg_class_t H5O_MSG_MTIME_NEW[1] = {{
     H5O_MTIME_NEW_ID,		/*message id number		*/
     "mtime_new",		/*message name for debugging	*/
     sizeof(time_t),		/*native message size		*/
+    0,				/* messages are sharable?       */
     H5O_mtime_new_decode,	/*decode message		*/
     H5O_mtime_new_encode,	/*encode message		*/
     H5O_mtime_copy,		/*copy the native value		*/
@@ -78,8 +82,13 @@ const H5O_msg_class_t H5O_MSG_MTIME_NEW[1] = {{
     H5O_mtime_free,		/* free method			*/
     NULL,		        /* file delete method		*/
     NULL,			/* link method			*/
-    NULL,			/*get share method		*/
     NULL,			/*set share method		*/
+    NULL,		    	/*can share method		*/
+    NULL,			/* pre copy native value to file */
+    NULL,			/* copy native value to file    */
+    NULL,			/* post copy native value to file    */
+    NULL,			/* get creation index		*/
+    NULL,			/* set creation index		*/
     H5O_mtime_debug		/*debug the message		*/
 }};
 
@@ -87,7 +96,7 @@ const H5O_msg_class_t H5O_MSG_MTIME_NEW[1] = {{
 #define H5O_MTIME_VERSION 	1
 
 /* Track whether tzset routine was called */
-static int	ntzset=0;
+static hbool_t ntzset = FALSE;
 
 /* Declare a free list to manage the time_t struct */
 H5FL_DEFINE(time_t);
@@ -107,12 +116,11 @@ H5FL_DEFINE(time_t);
  *		koziol@ncsa.uiuc.edu
  *		Jan  3 2002
  *
- * Modifications:
- *
  *-------------------------------------------------------------------------
  */
 static void *
-H5O_mtime_new_decode(H5F_t UNUSED *f, hid_t UNUSED dxpl_id, const uint8_t *p)
+H5O_mtime_new_decode(H5F_t UNUSED *f, hid_t UNUSED dxpl_id, H5O_t UNUSED *open_oh,
+    unsigned UNUSED mesg_flags, unsigned UNUSED *ioflags, const uint8_t *p)
 {
     time_t	*mesg;
     uint32_t    tmp_time;       /* Temporary copy of the time */
@@ -161,35 +169,33 @@ done:
  *		matzke@llnl.gov
  *		Jul 24 1998
  *
- * Modifications:
- *
  *-------------------------------------------------------------------------
  */
 static void *
-H5O_mtime_decode(H5F_t UNUSED *f, hid_t UNUSED dxpl_id, const uint8_t *p)
+H5O_mtime_decode(H5F_t UNUSED *f, hid_t UNUSED dxpl_id, H5O_t UNUSED *open_oh,
+    unsigned UNUSED mesg_flags, unsigned UNUSED *ioflags, const uint8_t *p)
 {
     time_t	*mesg, the_time;
     int	i;
     struct tm	tm;
     void        *ret_value;     /* Return value */
 
-    FUNC_ENTER_NOAPI_NOINIT(H5O_mtime_decode);
+    FUNC_ENTER_NOAPI_NOINIT(H5O_mtime_decode)
 
     /* check args */
-    assert(f);
-    assert(p);
+    HDassert(f);
+    HDassert(p);
 
     /* Initialize time zone information */
-    if (!ntzset) {
+    if(!ntzset) {
         HDtzset();
-        ntzset=1;
+        ntzset = TRUE;
     } /* end if */
 
     /* decode */
-    for (i=0; i<14; i++) {
-	if (!HDisdigit(p[i]))
-	    HGOTO_ERROR(H5E_OHDR, H5E_CANTINIT, NULL, "badly formatted modification time message");
-    }
+    for(i = 0; i < 14; i++)
+	if(!HDisdigit(p[i]))
+	    HGOTO_ERROR(H5E_OHDR, H5E_CANTINIT, NULL, "badly formatted modification time message")
 
     /*
      * Convert YYYYMMDDhhmmss UTC to a time_t.  This is a little problematic
@@ -206,8 +212,8 @@ H5O_mtime_decode(H5F_t UNUSED *f, hid_t UNUSED dxpl_id, const uint8_t *p)
     tm.tm_min = (p[10]-'0')*10 + (p[11]-'0');
     tm.tm_sec = (p[12]-'0')*10 + (p[13]-'0');
     tm.tm_isdst = -1; /*figure it out*/
-    if ((time_t)-1==(the_time=HDmktime(&tm)))
-	HGOTO_ERROR(H5E_OHDR, H5E_CANTINIT, NULL, "badly formatted modification time message");
+    if((time_t)-1 == (the_time = HDmktime(&tm)))
+	HGOTO_ERROR(H5E_OHDR, H5E_CANTINIT, NULL, "badly formatted modification time message")
 
 #if defined(H5_HAVE_TM_GMTOFF)
     /* FreeBSD, OSF 4.0 */
@@ -223,8 +229,8 @@ H5O_mtime_decode(H5F_t UNUSED *f, hid_t UNUSED dxpl_id, const uint8_t *p)
     {
         struct timezone tz;
 
-        if (HDBSDgettimeofday(NULL, &tz)<0)
-            HGOTO_ERROR(H5E_OHDR, H5E_CANTINIT, NULL, "unable to obtain local timezone information");
+        if(HDBSDgettimeofday(NULL, &tz) < 0)
+            HGOTO_ERROR(H5E_OHDR, H5E_CANTINIT, NULL, "unable to obtain local timezone information")
         the_time -= tz.tz_minuteswest * 60 - (tm.tm_isdst ? 3600 : 0);
     }
 #elif defined(H5_HAVE_GETTIMEOFDAY) && defined(H5_HAVE_STRUCT_TIMEZONE) && defined(H5_GETTIMEOFDAY_GIVES_TZ)
@@ -232,52 +238,35 @@ H5O_mtime_decode(H5F_t UNUSED *f, hid_t UNUSED dxpl_id, const uint8_t *p)
 	struct timezone tz;
 	struct timeval tv;  /* Used as a placebo; some systems don't like NULL */
 
-	if (HDgettimeofday(&tv, &tz) < 0)
-	    HGOTO_ERROR(H5E_OHDR, H5E_CANTINIT, NULL, "unable to obtain local timezone information");
+	if(HDgettimeofday(&tv, &tz) < 0)
+	    HGOTO_ERROR(H5E_OHDR, H5E_CANTINIT, NULL, "unable to obtain local timezone information")
 
 	the_time -= tz.tz_minuteswest * 60 - (tm.tm_isdst ? 3600 : 0);
     }
-#elif defined (WIN32)
-  #if !defined (__MWERKS__) /* MSVC */
-    {
-     struct timeb timebuffer;
-     long  tz;
-
-     ftime(&timebuffer);
-     tz = timebuffer.timezone;
-     /* daylight is not handled properly. Currently we just hard-code
-     the problem. */
-     the_time -= tz * 60 - 3600;
-    }
-  #else  /*__MWERKS__*/
-
-    ;
-
-  #endif /*__MWERKS__*/
-#else /* WIN32 */
+#else
     /*
      * The catch-all.  If we can't convert a character string universal
      * coordinated time to a time_t value reliably then we can't decode the
      * modification time message. This really isn't as bad as it sounds -- the
-     * only way a user can get the modification time is from H5Gget_objinfo()
-     * and H5G_get_objinfo() can gracefully recover.
+     * only way a user can get the modification time is from our internal
+     * query routines, which can gracefully recover.
      */
 
     /* Irix64 */
-    HGOTO_ERROR(H5E_OHDR, H5E_CANTINIT, NULL, "unable to obtain local timezone information");
+    HGOTO_ERROR(H5E_OHDR, H5E_CANTINIT, NULL, "unable to obtain local timezone information")
 #endif
 
     /* The return value */
-    if (NULL==(mesg = H5FL_MALLOC(time_t)))
-	HGOTO_ERROR (H5E_RESOURCE, H5E_NOSPACE, NULL, "memory allocation failed");
+    if(NULL == (mesg = H5FL_MALLOC(time_t)))
+	HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, NULL, "memory allocation failed")
     *mesg = the_time;
 
     /* Set return value */
-    ret_value=mesg;
+    ret_value = mesg;
 
 done:
-    FUNC_LEAVE_NOAPI(ret_value);
-}
+    FUNC_LEAVE_NOAPI(ret_value)
+} /* end H5O_mtime_decode() */
 
 
 /*-------------------------------------------------------------------------
@@ -291,12 +280,10 @@ done:
  *		koziol@ncsa.uiuc.edu
  *		Jan  3 2002
  *
- * Modifications:
- *
  *-------------------------------------------------------------------------
  */
 static herr_t
-H5O_mtime_new_encode(H5F_t UNUSED *f, uint8_t *p, const void *_mesg)
+H5O_mtime_new_encode(H5F_t UNUSED *f, hbool_t UNUSED disable_shared, uint8_t *p, const void *_mesg)
 {
     const time_t	*mesg = (const time_t *) _mesg;
 
@@ -338,7 +325,7 @@ H5O_mtime_new_encode(H5F_t UNUSED *f, uint8_t *p, const void *_mesg)
  *-------------------------------------------------------------------------
  */
 static herr_t
-H5O_mtime_encode(H5F_t UNUSED *f, uint8_t *p, const void *_mesg)
+H5O_mtime_encode(H5F_t UNUSED *f, hbool_t UNUSED disable_shared, uint8_t *p, const void *_mesg)
 {
     const time_t	*mesg = (const time_t *) _mesg;
     struct tm		*tm;
@@ -379,7 +366,7 @@ H5O_mtime_encode(H5F_t UNUSED *f, uint8_t *p, const void *_mesg)
  *-------------------------------------------------------------------------
  */
 static void *
-H5O_mtime_copy(const void *_mesg, void *_dest, unsigned UNUSED update_flags)
+H5O_mtime_copy(const void *_mesg, void *_dest)
 {
     const time_t	*mesg = (const time_t *) _mesg;
     time_t		*dest = (time_t *) _dest;
@@ -424,7 +411,7 @@ done:
  *-------------------------------------------------------------------------
  */
 static size_t
-H5O_mtime_new_size(const H5F_t UNUSED * f, const void UNUSED * mesg)
+H5O_mtime_new_size(const H5F_t UNUSED * f, hbool_t UNUSED disable_shared, const void UNUSED * mesg)
 {
     FUNC_ENTER_NOAPI_NOINIT_NOFUNC(H5O_mtime_new_size);
 
@@ -457,7 +444,7 @@ H5O_mtime_new_size(const H5F_t UNUSED * f, const void UNUSED * mesg)
  *-------------------------------------------------------------------------
  */
 static size_t
-H5O_mtime_size(const H5F_t UNUSED * f, const void UNUSED * mesg)
+H5O_mtime_size(const H5F_t UNUSED * f, hbool_t UNUSED disable_shared, const void UNUSED * mesg)
 {
     FUNC_ENTER_NOAPI_NOINIT_NOFUNC(H5O_mtime_size);
 
@@ -508,16 +495,16 @@ H5O_mtime_reset(void UNUSED *_mesg)
  *-------------------------------------------------------------------------
  */
 static herr_t
-H5O_mtime_free (void *mesg)
+H5O_mtime_free(void *mesg)
 {
-    FUNC_ENTER_NOAPI_NOINIT_NOFUNC(H5O_mtime_free);
+    FUNC_ENTER_NOAPI_NOINIT_NOFUNC(H5O_mtime_free)
 
-    assert (mesg);
+    HDassert(mesg);
 
-    H5FL_FREE(time_t,mesg);
+    mesg = H5FL_FREE(time_t, mesg);
 
-    FUNC_LEAVE_NOAPI(SUCCEED);
-}
+    FUNC_LEAVE_NOAPI(SUCCEED)
+} /* end H5O_mtime_free() */
 
 
 /*-------------------------------------------------------------------------

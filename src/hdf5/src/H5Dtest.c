@@ -14,19 +14,52 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 /* Programmer:  Quincey Koziol <koziol@ncsa.uiuc.edu>
- *              Thusdayr, May 27, 2004
+ *              Thursday, May 27, 2004
  *
  * Purpose:	Dataset testing functions.
  */
+
+/****************/
+/* Module Setup */
+/****************/
 
 #define H5D_PACKAGE		/*suppress error about including H5Dpkg	  */
 #define H5D_TESTING		/*suppress warning about H5D testing funcs*/
 
 
-#include "H5private.h"		/* Generic Functions			  */
+/***********/
+/* Headers */
+/***********/
+#include "H5private.h"		/* Generic Functions			*/
 #include "H5Dpkg.h"		/* Datasets 				*/
-#include "H5Eprivate.h"		/* Error handling		  */
-#include "H5Iprivate.h"		/* ID Functions		  */
+#include "H5Eprivate.h"		/* Error handling		  	*/
+#include "H5Iprivate.h"		/* IDs			  		*/
+
+
+/****************/
+/* Local Macros */
+/****************/
+
+
+/******************/
+/* Local Typedefs */
+/******************/
+
+
+/********************/
+/* Local Prototypes */
+/********************/
+
+
+/*********************/
+/* Package Variables */
+/*********************/
+
+
+/*******************/
+/* Local Variables */
+/*******************/
+
 
 
 /*--------------------------------------------------------------------------
@@ -52,19 +85,19 @@ herr_t
 H5D_layout_version_test(hid_t did, unsigned *version)
 {
     H5D_t	*dset;          /* Pointer to dataset to query */
-    herr_t ret_value=SUCCEED;   /* return value */
+    herr_t ret_value = SUCCEED; /* return value */
 
-    FUNC_ENTER_NOAPI(H5D_layout_version_test, FAIL);
+    FUNC_ENTER_NOAPI(H5D_layout_version_test, FAIL)
 
     /* Check args */
-    if (NULL==(dset=H5I_object_verify(did, H5I_DATASET)))
-        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a dataset")
+    if(NULL == (dset = (H5D_t *)H5I_object_verify(did, H5I_DATASET)))
+        HGOTO_ERROR(H5E_DATASET, H5E_BADTYPE, FAIL, "not a dataset")
 
     if(version)
-        *version=dset->shared->layout.version;
+        *version = dset->shared->layout.version;
 
 done:
-    FUNC_LEAVE_NOAPI(ret_value);
+    FUNC_LEAVE_NOAPI(ret_value)
 }   /* H5D_layout_version_test() */
 
 
@@ -91,21 +124,21 @@ herr_t
 H5D_layout_contig_size_test(hid_t did, hsize_t *size)
 {
     H5D_t	*dset;          /* Pointer to dataset to query */
-    herr_t ret_value=SUCCEED;   /* return value */
+    herr_t ret_value = SUCCEED; /* return value */
 
-    FUNC_ENTER_NOAPI(H5D_layout_contig_size_test, FAIL);
+    FUNC_ENTER_NOAPI(H5D_layout_contig_size_test, FAIL)
 
     /* Check args */
-    if (NULL==(dset=H5I_object_verify(did, H5I_DATASET)))
-        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a dataset")
+    if(NULL == (dset = (H5D_t *)H5I_object_verify(did, H5I_DATASET)))
+        HGOTO_ERROR(H5E_DATASET, H5E_BADTYPE, FAIL, "not a dataset")
 
     if(size) {
-        assert(dset->shared->layout.type==H5D_CONTIGUOUS);
-        *size=dset->shared->layout.u.contig.size;
+        HDassert(dset->shared->layout.type == H5D_CONTIGUOUS);
+        *size = dset->shared->layout.storage.u.contig.size;
     } /* end if */
 
 done:
-    FUNC_LEAVE_NOAPI(ret_value);
+    FUNC_LEAVE_NOAPI(ret_value)
 }   /* H5D_layout_contig_size_test() */
 
 
@@ -115,7 +148,7 @@ done:
  PURPOSE
     Determine current the size of the dataset's chunk cache
  USAGE
-    herr_t H5D_layout_contig_size_test(did, size)
+    herr_t H5D_current_cache_size_test(did, size)
         hid_t did;              IN: Dataset to query
         hsize_t *size;          OUT: Pointer to location to place size info
  RETURNS

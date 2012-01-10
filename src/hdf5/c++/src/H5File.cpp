@@ -76,10 +76,10 @@ H5File::H5File() : IdComponent(), id(0) {}
 ///		For info on file creation in the case of an already-open file,
 ///		please refer to the \b Special \b case section in the C layer
 ///		Reference Manual at:
-/// <A HREF="../RM_H5F.html#File-Create">../RM_H5F.html#File-Create</A>
+/// http://www.hdfgroup.org/HDF5/doc/RM/RM_H5F.html#File-Create
 // Programmer	Binh-Minh Ribler - 2000
 //--------------------------------------------------------------------------
-H5File::H5File( const char* name, unsigned int flags, const FileCreatPropList& create_plist, const FileAccPropList& access_plist ) : IdComponent()
+H5File::H5File( const char* name, unsigned int flags, const FileCreatPropList& create_plist, const FileAccPropList& access_plist ) : IdComponent(0)
 {
    p_get_file(name, flags, create_plist, access_plist);
 }
@@ -97,7 +97,7 @@ H5File::H5File( const char* name, unsigned int flags, const FileCreatPropList& c
 ///		FileCreatPropList::DEFAULT
 // Programmer	Binh-Minh Ribler - 2000
 //--------------------------------------------------------------------------
-H5File::H5File( const H5std_string& name, unsigned int flags, const FileCreatPropList& create_plist, const FileAccPropList& access_plist ) : IdComponent()
+H5File::H5File( const H5std_string& name, unsigned int flags, const FileCreatPropList& create_plist, const FileAccPropList& access_plist ) : IdComponent(0)
 {
    p_get_file(name.c_str(), flags, create_plist, access_plist);
 }
@@ -252,7 +252,7 @@ void H5File::openFile(const H5std_string& name, unsigned int flags, const FileAc
 //		If this object has represented another HDF5 file, the previous
 //		HDF5 file need to be closed first.
 // Programmer	Binh-Minh Ribler - 2000
-// Note:	This wrapper doesn't seem right regarding the 'id' and should
+// Note:        This wrapper doesn't seem right regarding the 'id' and should
 //              be investigated.  BMR - 2/20/2005
 // Modification
 //		- Replaced resetIdComponent() with decRefCount() to use C
@@ -506,25 +506,14 @@ H5std_string H5File::getFileName() const
    }
 }
 
+#ifndef H5_NO_DEPRECATED_SYMBOLS
 //--------------------------------------------------------------------------
 // Function:	H5File::getObjType
-///\brief	This function was misnamed and will be deprecated in favor of
-///		H5File::getRefObjType; please use getRefObjType instead.
-// Programmer	Binh-Minh Ribler - May, 2004
-// Note:	Replaced by getRefObjType. - BMR - Jul, 2008
-//--------------------------------------------------------------------------
-H5G_obj_t H5File::getObjType(void *ref, H5R_type_t ref_type) const
-{
-    return(getRefObjType(ref, ref_type));
-}
-
-//--------------------------------------------------------------------------
-// Function:	H5File::getRefObjType
 ///\brief	Retrieves the type of object that an object reference points to.
 ///\param	ref      - IN: Reference to query
 ///\param	ref_type - IN: Type of reference, valid values are:
-///		\li \c H5R_OBJECT \tReference is an object reference.
-///		\li \c H5R_DATASET_REGION \tReference is a dataset region reference.
+///		\li \c H5R_OBJECT         - Reference is an object reference.
+///		\li \c H5R_DATASET_REGION - Reference is a dataset region reference.
 ///\return	Object type, which can be one of the following:
 ///		\li \c H5G_LINK    - Object is a symbolic link.
 ///		\li \c H5G_GROUP   - Object is a group.
@@ -533,15 +522,16 @@ H5G_obj_t H5File::getObjType(void *ref, H5R_type_t ref_type) const
 ///\exception	H5::FileIException
 // Programmer	Binh-Minh Ribler - May, 2004
 //--------------------------------------------------------------------------
-H5G_obj_t H5File::getRefObjType(void *ref, H5R_type_t ref_type) const
+H5G_obj_t H5File::getObjType(void *ref, H5R_type_t ref_type) const
 {
    try {
-      return(p_get_refobj_type(ref, ref_type));
+      return(p_get_obj_type(ref, ref_type));
    }
    catch (IdComponentException E) {
-      throw FileIException("H5File::getRefObjType", E.getDetailMsg());
+      throw FileIException("H5File::getObjType", E.getDetailMsg());
    }
 }
+#endif /* H5_NO_DEPRECATED_SYMBOLS */
 
 //--------------------------------------------------------------------------
 // Function:	H5File::getRegion
@@ -586,7 +576,7 @@ hsize_t H5File::getFileSize() const
 
 //--------------------------------------------------------------------------
 // Function:    H5File::p_reference (protected)
-// Purpose:	Creates a reference to an HDF5 object or a dataset region.
+// Purpose      Creates a reference to an HDF5 object or a dataset region.
 // Parameters
 //              name - IN: Name of the object to be referenced
 //              dataspace - IN: Dataspace with selection
@@ -610,8 +600,8 @@ void H5File::p_reference(void* ref, const char* name, hid_t space_id, H5R_type_t
 ///\param       name - IN: Name of the object to be referenced
 ///\param       dataspace - IN: Dataspace with selection
 ///\param       ref_type - IN: Type of reference to query, valid values are:
-///             \li \c H5R_OBJECT \tReference is an object reference.
-///             \li \c H5R_DATASET_REGION \tReference is a dataset region
+///             \li \c H5R_OBJECT         - Reference is an object reference.
+///             \li \c H5R_DATASET_REGION - Reference is a dataset region
 ///                     reference. - this is the default
 ///\exception   H5::IdComponentException
 // Programmer   Binh-Minh Ribler - May, 2004
@@ -649,7 +639,6 @@ void H5File::reference(void* ref, const char* name) const
       throw IdComponentException("H5File::reference", E.getDetailMsg());
    }
 }
-
 //--------------------------------------------------------------------------
 // Function:    H5File::reference
 ///\brief       This is an overloaded function, provided for your convenience.
@@ -664,10 +653,10 @@ void H5File::reference(void* ref, const H5std_string& name) const
    reference(ref, name.c_str());
 }
 
-#if 0
+#ifndef H5_NO_DEPRECATED_SYMBOLS
 //--------------------------------------------------------------------------
 // Function:    H5File::p_get_obj_type (protected)
-// Purpose:	Retrieves the type of object that an object reference points to.
+// Purpose      Retrieves the type of object that an object reference points to.
 // Parameters
 //              ref      - IN: Reference to query
 //              ref_type - IN: Type of reference to query
@@ -679,28 +668,22 @@ void H5File::reference(void* ref, const H5std_string& name) const
 // Exception    H5::IdComponentException
 // Programmer   Binh-Minh Ribler - May, 2004
 //--------------------------------------------------------------------------
-H5G_obj_t H5Object::p_get_obj_type(void *ref, H5R_type_t ref_type) const
+H5G_obj_t H5File::p_get_obj_type(void *ref, H5R_type_t ref_type) const
 {
-#ifdef H5_WANT_H5_V1_4_COMPAT
-   H5G_obj_t obj_type = H5Rget_object_type(getId(), ref);
-#else
-   H5G_obj_t obj_type = H5Rget_obj_type(getId(), ref_type, ref);
-#endif
+   H5G_obj_t obj_type = H5Rget_obj_type1(getId(), ref_type, ref);
 
    if (obj_type == H5G_UNKNOWN)
    {
-#ifdef H5_WANT_H5_V1_4_COMPAT
-      throw IdComponentException("", "H5Rget_object_type failed");
-#else
       throw IdComponentException("", "H5Rget_obj_type failed");
-#endif
    }
    return(obj_type);
 }
-#endif
+#endif /* H5_NO_DEPRECATED_SYMBOLS */
+
+
 //--------------------------------------------------------------------------
 // Function:    H5File::p_get_region (protected)
-// Purpose:	Retrieves a dataspace with the region pointed to selected.
+// Purpose      Retrieves a dataspace with the region pointed to selected.
 // Parameters
 //              ref_type - IN: Type of reference to get region of - default
 //                              to H5R_DATASET_REGION
@@ -733,15 +716,15 @@ hid_t H5File::getLocId() const
 }
 
 //--------------------------------------------------------------------------
-// Function:	H5File::getId
-// Purpose:	Get the id of this HDF5 file
+// Function:    H5File::getId
+// Purpose:     Get the id of this attribute
 // Modification:
-//	May 2008 - BMR
-//		Class hierarchy is revised to address bugzilla 1068.  Class
-//		AbstractDS and Attribute are moved out of H5Object.  In
-//		addition, member IdComponent::id is moved into subclasses, and
-//		IdComponent::getId now becomes pure virtual function.
-// Programmer	Binh-Minh Ribler - May, 2008
+//      May 2008 - BMR
+//              Class hierarchy is revised to address bugzilla 1068.  Class
+//              AbstractDS and Attribute are moved out of H5Object.  In
+//              addition, member IdComponent::id is moved into subclasses, and
+//              IdComponent::getId now becomes pure virtual function.
+// Programmer   Binh-Minh Ribler - May, 2008
 //--------------------------------------------------------------------------
 hid_t H5File::getId() const
 {
@@ -749,28 +732,28 @@ hid_t H5File::getId() const
 }
 
 //--------------------------------------------------------------------------
-// Function:	H5File::p_setId
-///\brief	Sets the identifier of this HDF5 file to a new value.
+// Function:    H5File::p_setId
+///\brief       Sets the identifier of this object to a new value.
 ///
-///\exception	H5::IdComponentException when the attempt to close the HDF5
-///		object fails
+///\exception   H5::IdComponentException when the attempt to close the HDF5
+///             object fails
 // Description:
-//		The underlaying reference counting in the C library ensures
-//		that the current valid id of this object is properly closed.
-//		Then the object's id is reset to the new id.
-// Programmer	Binh-Minh Ribler - 2000
+//              The underlaying reference counting in the C library ensures
+//              that the current valid id of this object is properly closed.
+//              Then the object's id is reset to the new id.
+// Programmer   Binh-Minh Ribler - 2000
 //--------------------------------------------------------------------------
 void H5File::p_setId(const hid_t new_id)
 {
     // handling references to this old id
     try {
-	close();
+        close();
     }
-    catch (Exception close_error) {
-	throw FileIException("H5File::p_setId", close_error.getDetailMsg());
+    catch (Exception E) {
+        throw FileIException("H5File::p_setId", E.getDetailMsg());
     }
-    // reset object's id to the given id
-    id = new_id;
+   // reset object's id to the given id
+   id = new_id;
 }
 
 //--------------------------------------------------------------------------
@@ -789,10 +772,8 @@ void H5File::close()
 	{
 	    throw FileIException("H5File::close", "H5Fclose failed");
 	}
-	// reset the id when the file that it represents is no longer
-	// referenced
-	if (getCounter() == 0)
-	    id = 0;
+	// reset the id
+	id = 0;
     }
 }
 
@@ -831,8 +812,7 @@ H5File::~H5File()
 {
     try {
 	close();
-    }
-    catch (Exception close_error) {
+    } catch (Exception close_error) {
 	cerr << "H5File::~H5File - " << close_error.getDetailMsg() << endl;
     }
 }

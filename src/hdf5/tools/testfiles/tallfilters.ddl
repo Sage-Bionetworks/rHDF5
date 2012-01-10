@@ -1,6 +1,3 @@
-#############################
-Expected output for 'h5dump -H -p -d all tfilters.h5'
-#############################
 HDF5 "tfilters.h5" {
 DATASET "all" {
    DATATYPE  H5T_STD_I32LE
@@ -20,6 +17,7 @@ DATASET "all" {
       }
       COMPRESSION DEFLATE { LEVEL 5 }
       CHECKSUM FLETCHER32
+      COMPRESSION NBIT
    }
    FILLVALUE {
       FILL_TIME H5D_FILL_TIME_IFSET

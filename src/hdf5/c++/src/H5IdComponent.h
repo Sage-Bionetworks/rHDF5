@@ -65,7 +65,7 @@ class H5_DLLCPP IdComponent {
 	// <class-name> is returned by fromClass().
 	H5std_string inMemFunc(const char* func_name) const;
 
-	// Returns this class name.
+	///\brief Returns this class name.
 	virtual H5std_string fromClass() const { return("IdComponent");}
 
 #endif // DOXYGEN_SHOULD_SKIP_THIS
@@ -82,17 +82,12 @@ class H5_DLLCPP IdComponent {
 	// Gets the name of the file, in which an HDF5 object belongs.
 	H5std_string p_get_file_name() const;
 
-	// Retrieves the type of object that an object reference points to.
-	H5G_obj_t p_get_refobj_type(void *ref, H5R_type_t ref_type) const;
-
 	// Verifies that the given id is valid.
 	static bool p_valid_id(const hid_t obj_id);
 
 	// Sets the identifier of this object to a new value. - this one
 	// doesn't increment reference count
 	virtual void p_setId(const hid_t new_id) = 0;
-
-	// Opens the HDF5 object referenced.
 
 #endif // DOXYGEN_SHOULD_SKIP_THIS
 

@@ -45,11 +45,6 @@
 #   include <sys/stat.h>
 #endif
 
-#ifdef WIN32
-#   include <io.h>
-#	include <fcntl.h>
-#endif
-
 #ifndef FALSE
 #   define FALSE	0
 #endif
@@ -65,6 +60,12 @@
 #ifndef MIN3
 #   define MIN3(X,Y,Z)	MIN(MIN(X,Y),Z)
 #endif
+
+/*Make these 2 private properties(defined in H5Fprivate.h) available to h5repart.
+ *The first one updates the member file size in the superblock.  The second one
+ *change file driver from family to sec2. */
+#define H5F_ACS_FAMILY_NEWSIZE_NAME            "family_newsize"
+#define H5F_ACS_FAMILY_TO_SEC2_NAME            "family_to_sec2"
 
 
 /*-------------------------------------------------------------------------
@@ -84,19 +85,20 @@
 static void
 usage (const char *progname)
 {
-    fprintf(stderr, "usage: %s [-v] [-V] [-[b|m] N[g|m|k]] SRC DST\n",
+    fprintf(stderr, "usage: %s [-v] [-V] [-[b|m] N[g|m|k]] [-family_to_sec2] SRC DST\n",
 	    progname);
     fprintf(stderr, "   -v     Produce verbose output\n");
     fprintf(stderr, "   -V     Print a version number and exit\n");
     fprintf(stderr, "   -b N   The I/O block size, defaults to 1kB\n");
     fprintf(stderr, "   -m N   The destination member size or 1GB\n");
+    fprintf(stderr, "   -family_to_sec2   Change file driver from family to sec2\n");
     fprintf(stderr, "   SRC    The name of the source file\n");
     fprintf(stderr, "   DST	The name of the destination files\n");
     fprintf(stderr, "Sizes may be suffixed with `g' for GB, `m' for MB or "
 	    "`k' for kB.\n");
     fprintf(stderr, "File family names include an integer printf "
 	    "format such as `%%d'\n");
-    exit (1);
+    exit (EXIT_FAILURE);
 }
 
 
@@ -209,21 +211,16 @@ main (int argc, char *argv[])
     int		dst_is_family;		/*is dst name a family name?	*/
     int		dst_membno=0;		/*destination member number	*/
 
-#if defined(WIN32) && ! defined (__MWERKS__)
-    __int64	left_overs=0;		/*amount of zeros left over	*/
-    __int64	src_offset=0;		/*offset in source member	*/
-    __int64	dst_offset=0;		/*offset in destination member	*/
-    __int64	src_size;		/*source logical member size	*/
-    __int64	src_act_size;		/*source actual member size	*/
-    __int64	dst_size=1 GB;		/*destination logical memb size	*/
-#else
     off_t	left_overs=0;		/*amount of zeros left over	*/
     off_t	src_offset=0;		/*offset in source member	*/
     off_t	dst_offset=0;		/*offset in destination member	*/
     off_t	src_size;		/*source logical member size	*/
     off_t	src_act_size;		/*source actual member size	*/
     off_t	dst_size=1 GB;		/*destination logical memb size	*/
-#endif
+    hid_t       fapl;                   /*file access property list     */
+    hid_t       file;
+    hsize_t     hdsize;                 /*destination logical memb size */
+    hbool_t     family_to_sec2=FALSE;   /*change family to sec2 driver? */
 
     /*
      * Get the program name from argv[0]. Use only the last component.
@@ -241,7 +238,10 @@ main (int argc, char *argv[])
 	} else if (!strcmp(argv[argno], "-V")) {
 	    printf("This is %s version %u.%u release %u\n",
 		   prog_name, H5_VERS_MAJOR, H5_VERS_MINOR, H5_VERS_RELEASE);
-	    exit(0);
+	    exit(EXIT_SUCCESS);
+        } else if (!strcmp (argv[argno], "-family_to_sec2")) {
+	    family_to_sec2 = TRUE;
+	    argno++;
 	} else if ('b'==argv[argno][1]) {
 	    blk_size = get_size (prog_name, &argno, argc, argv);
 	} else if ('m'==argv[argno][1]) {
@@ -262,12 +262,12 @@ main (int argc, char *argv[])
 
     if ((src=HDopen(src_name, O_RDONLY,0))<0) {
 	perror (src_name);
-	exit (1);
+	exit (EXIT_FAILURE);
     }
 
     if (HDfstat(src, &sb)<0) {
 	perror ("fstat");
-	exit (1);
+	exit (EXIT_FAILURE);
     }
     src_size = src_act_size = sb.st_size;
     if (verbose) fprintf (stderr, "< %s\n", src_name);
@@ -282,7 +282,7 @@ main (int argc, char *argv[])
 
     if ((dst=HDopen (dst_name, O_RDWR|O_CREAT|O_TRUNC, 0666))<0) {
 	perror (dst_name);
-	exit (1);
+	exit (EXIT_FAILURE);
     }
     if (verbose) fprintf (stderr, "> %s\n", dst_name);
 
@@ -306,12 +306,12 @@ main (int argc, char *argv[])
 	    need_write = FALSE;
 	} else if (src_offset<src_act_size) {
 	    n = (size_t)MIN ((off_t)n, src_act_size-src_offset);
-	    if ((nio=read (src, buf, n))<0) {
+	    if ((nio=HDread (src, buf, n))<0) {
 		perror ("read");
-		exit (1);
+		exit (EXIT_FAILURE);
 	    } else if ((size_t)nio!=n) {
 		fprintf (stderr, "%s: short read\n", src_name);
-		exit (1);
+		exit (EXIT_FAILURE);
 	    }
 	    for (i=0; i<n; i++) {
 		if (buf[i]) break;
@@ -331,14 +331,14 @@ main (int argc, char *argv[])
 	if (need_write) {
 	    if (need_seek && HDlseek (dst, dst_offset, SEEK_SET)<0) {
 		perror ("HDlseek");
-		exit (1);
+		exit (EXIT_FAILURE);
 	    }
-	    if ((nio=write (dst, buf, n))<0) {
+	    if ((nio=HDwrite (dst, buf, n))<0) {
 		perror ("write");
-		exit (1);
+		exit (EXIT_FAILURE);
 	    } else if ((size_t)nio!=n) {
 		fprintf (stderr, "%s: short write\n", dst_name);
-		exit (1);
+		exit (EXIT_FAILURE);
 	    }
 	    need_seek = FALSE;
 	} else {
@@ -355,7 +355,7 @@ main (int argc, char *argv[])
 	 */
 	src_offset += n;
 	if (src_offset==src_act_size) {
-	    close (src);
+	    HDclose (src);
 	    if (!src_is_family) {
 		dst_offset += n;
 		break;
@@ -366,11 +366,11 @@ main (int argc, char *argv[])
 		break;
 	    } else if (src<0) {
 		perror (src_name);
-		exit (1);
+		exit (EXIT_FAILURE);
 	    }
 	    if (HDfstat (src, &sb)<0) {
 		perror ("fstat");
-		exit (1);
+		exit (EXIT_FAILURE);
 	    }
 	    src_act_size = sb.st_size;
 	    if (src_act_size>src_size) {
@@ -391,26 +391,26 @@ main (int argc, char *argv[])
 	    if (0==dst_membno) {
 		if (HDlseek (dst, dst_size-1, SEEK_SET)<0) {
 		    perror ("HDHDlseek");
-		    exit (1);
+		    exit (EXIT_FAILURE);
 		}
-		if (read (dst, buf, 1)<0) {
+		if (HDread (dst, buf, 1)<0) {
 		    perror ("read");
-		    exit (1);
+		    exit (EXIT_FAILURE);
 		}
 		if (HDlseek (dst, dst_size-1, SEEK_SET)<0) {
 		    perror ("HDlseek");
-		    exit (1);
+		    exit (EXIT_FAILURE);
 		}
-		if (write (dst, buf, 1)<0) {
+		if (HDwrite (dst, buf, 1)<0) {
 		    perror ("write");
-		    exit (1);
+		    exit (EXIT_FAILURE);
 		}
 	    }
-	    close (dst);
+	    HDclose (dst);
 	    sprintf (dst_name, dst_gen_name, ++dst_membno);
 	    if ((dst=HDopen (dst_name, O_RDWR|O_CREAT|O_TRUNC, 0666))<0) {
 		perror (dst_name);
-		exit (1);
+		exit (EXIT_FAILURE);
 	    }
 	    dst_offset = 0;
 	    need_seek = FALSE;
@@ -426,24 +426,78 @@ main (int argc, char *argv[])
     if (need_seek) {
 	if (HDlseek (dst, dst_offset-1, SEEK_SET)<0) {
 	    perror ("HDlseek");
-	    exit (1);
+	    exit (EXIT_FAILURE);
 	}
-	if (read (dst, buf, 1)<0) {
+	if (HDread (dst, buf, 1)<0) {
 	    perror ("read");
-	    exit (1);
+	    exit (EXIT_FAILURE);
 	}
 	if (HDlseek (dst, dst_offset-1, SEEK_SET)<0) {
 	    perror ("HDlseek");
-	    exit (1);
+	    exit (EXIT_FAILURE);
 	}
-	if (write (dst, buf, 1)<0) {
+	if (HDwrite (dst, buf, 1)<0) {
 	    perror ("write");
-	    exit (1);
+	    exit (EXIT_FAILURE);
 	}
     }
-    close (dst);
+    HDclose (dst);
+
+    /* Modify family driver information saved in superblock through private property.
+     * These private properties are for this tool only. */
+    if ((fapl=H5Pcreate(H5P_FILE_ACCESS))<0) {
+        perror ("H5Pcreate");
+        exit (EXIT_FAILURE);
+    }
+
+    if(family_to_sec2) {
+        /* The user wants to change file driver from family to sec2. Open the file
+         * with sec2 driver.  This property signals the library to ignore the family
+         * driver information saved in the superblock. */
+        if(H5Pset(fapl, H5F_ACS_FAMILY_TO_SEC2_NAME, &family_to_sec2) < 0) {
+            perror ("H5Pset");
+            exit (EXIT_FAILURE);
+        }
+    } else {
+        /* Modify family size saved in superblock through private property. It signals
+         * library to save the new member size(specified in command line) in superblock.
+         * This private property is for this tool only. */
+        if(H5Pset_fapl_family(fapl, H5F_FAMILY_DEFAULT, H5P_DEFAULT) < 0) {
+            perror ("H5Pset_fapl_family");
+            exit (EXIT_FAILURE);
+        }
+
+        /* Set the property of the new member size as hsize_t */
+        hdsize = dst_size;
+        if(H5Pset(fapl, H5F_ACS_FAMILY_NEWSIZE_NAME, &hdsize) < 0) {
+            perror ("H5Pset");
+            exit (EXIT_FAILURE);
+        }
+    }
+
+    /* If the new file is a family file, try to open file for "read and write" to
+     * flush metadata. Flushing metadata will update the superblock to the new
+     * member size.  If the original file is a family file and the new file is a sec2
+     * file, the property FAMILY_TO_SEC2 will signal the library to switch to sec2
+     * driver when the new file is opened.  If the original file is a sec2 file and the
+     * new file can only be a sec2 file, reopen the new file should fail.  There's
+     * nothing to do in this case. */
+    H5E_BEGIN_TRY {
+        file=H5Fopen(dst_gen_name, H5F_ACC_RDWR, fapl);
+    } H5E_END_TRY;
+    if(file>=0) {
+        if(H5Fclose(file)<0) {
+            perror ("H5Fclose");
+            exit (EXIT_FAILURE);
+        }
+    }
+
+    if(H5Pclose(fapl)<0) {
+        perror ("H5Pclose");
+        exit (EXIT_FAILURE);
+    }
 
     /* Free resources and return */
     free (buf);
-    return 0;
+    return EXIT_SUCCESS;
 }

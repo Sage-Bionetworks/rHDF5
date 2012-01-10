@@ -33,9 +33,7 @@
 
 /* Private headers needed by this file */
 #include "H5private.h"		/* Generic Functions			*/
-#include "H5ACprivate.h"	/* Metadata cache			*/
 #include "H5Fprivate.h"		/* File access				*/
-#include "H5FLprivate.h"	/* Free Lists                           */
 #include "H5RCprivate.h"	/* Reference counted object functions	*/
 
 /**************************/
@@ -51,20 +49,21 @@
 #ifdef NDEBUG
 #  undef H5B_DEBUG
 #endif
-#define H5B_MAGIC	"TREE"		/*tree node magic number	     */
-#define H5B_SIZEOF_MAGIC 4		/*size of magic number		     */
 
-/* Define return values from operator callback function for H5B_iterate */
-/* (Actually, any postive value will cause the iterator to stop and pass back
- *      that positive value to the function that called the iterator)
- */
-#define H5B_ITER_ERROR  (-1)
-#define H5B_ITER_CONT   (0)
-#define H5B_ITER_STOP   (1)
 
 /****************************/
 /* Library Private Typedefs */
 /****************************/
+
+/* B-tree IDs for various internal things. */
+/* Note - if more of these are added, any 'K' values (for internal or leaf
+ * nodes) they use will need to be stored in the file somewhere. -QAK
+ */
+typedef enum H5B_subid_t {
+    H5B_SNODE_ID	 = 0,	/*B-tree is for symbol table nodes	     */
+    H5B_CHUNK_ID	 = 1,	/*B-tree is for chunked dataset storage	     */
+    H5B_NUM_BTREE_ID            /* Number of B-tree key IDs (must be last)   */
+} H5B_subid_t;
 
 /* Define return values from B-tree insertion callbacks */
 typedef enum H5B_ins_t {
@@ -77,12 +76,16 @@ typedef enum H5B_ins_t {
     H5B_INS_REMOVE	 = 5	/*remove current node			     */
 } H5B_ins_t;
 
+/* Enum for specifying the direction of the critical key in relation to the
+ * child */
+typedef enum H5B_dir_t {
+    H5B_LEFT            = 0,    /* Critical key is to the left */
+    H5B_RIGHT           = 1     /* Critical key is to the right */
+} H5B_dir_t;
+
 /* Define the operator callback function pointer for H5B_iterate() */
 typedef int (*H5B_operator_t)(H5F_t *f, hid_t dxpl_id, const void *_lt_key, haddr_t addr,
                                         const void *_rt_key, void *_udata);
-
-/* Typedef for B-tree in memory (defined in H5Bpkg.h) */
-typedef struct H5B_t H5B_t;
 
 /* Each B-tree has certain information that can be shared across all
  * the instances of nodes in that B-tree.
@@ -93,6 +96,8 @@ typedef struct H5B_shared_t {
     size_t		sizeof_rkey;	/* Size of raw (disk) key	     */
     size_t		sizeof_rnode;	/* Size of raw (disk) node	     */
     size_t		sizeof_keys;	/* Size of native (memory) key node  */
+    size_t              sizeof_addr;    /* Size of file address (in bytes)   */
+    size_t              sizeof_len;     /* Size of file lengths (in bytes)   */
     uint8_t	        *page;	        /* Disk page */
     size_t              *nkey;          /* Offsets of each native key in native key buffer */
 } H5B_shared_t;
@@ -110,9 +115,9 @@ typedef struct H5B_class_t {
     size_t	sizeof_nkey;			/*size of native (memory) key*/
     H5RC_t *    (*get_shared)(const H5F_t*, const void*);    /*shared info for node */
     herr_t	(*new_node)(H5F_t*, hid_t, H5B_ins_t, void*, void*, void*, haddr_t*);
-    int         (*cmp2)(H5F_t*, hid_t, void*, void*, void*);	    /*compare 2 keys */
-    int         (*cmp3)(H5F_t*, hid_t, void*, void*, void*);	    /*compare 3 keys */
-    herr_t	(*found)(H5F_t*, hid_t, haddr_t, const void*, void*);
+    int         (*cmp2)(void*, void*, void*);	    /*compare 2 keys */
+    int         (*cmp3)(void*, void*, void*);	    /*compare 3 keys */
+    htri_t	(*found)(H5F_t*, hid_t, haddr_t, const void*, void*);
 
     /* insert new data */
     H5B_ins_t	(*insert)(H5F_t*, hid_t, haddr_t, void*, hbool_t*, void*, void*,
@@ -122,42 +127,55 @@ typedef struct H5B_class_t {
     hbool_t	follow_min;
     hbool_t	follow_max;
 
+    /* The direction of the key that is intrinsically associated with each node */
+    H5B_dir_t   critical_key;
+
     /* remove existing data */
     H5B_ins_t	(*remove)(H5F_t*, hid_t, haddr_t, void*, hbool_t*, void*, void*,
 			  hbool_t*);
 
     /* encode, decode, debug key values */
-    herr_t	(*decode)(const H5F_t*, const struct H5B_t*, const uint8_t*, void*);
-    herr_t	(*encode)(const H5F_t*, const struct H5B_t*, uint8_t*, void*);
-    herr_t	(*debug_key)(FILE*, H5F_t*, hid_t, int, int, const void*, const void*);
+    herr_t	(*decode)(const H5B_shared_t*, const uint8_t*, void*);
+    herr_t	(*encode)(const H5B_shared_t*, uint8_t*, const void*);
+    herr_t	(*debug_key)(FILE*, int, int, const void*, const void*);
 } H5B_class_t;
+
+/* Information about B-tree */
+typedef struct H5B_info_t {
+    hsize_t     size;           /* Size of B-tree nodes */
+    hsize_t     num_nodes;      /* Number of B-tree nodes */
+} H5B_info_t;
+
+
 
 /*****************************/
 /* Library-private Variables */
 /*****************************/
- 
-/* Declare a free list to manage the H5B_shared_t struct */
-H5FL_EXTERN(H5B_shared_t);
 
 
 /***************************************/
 /* Library-private Function Prototypes */
 /***************************************/
-H5_DLL size_t H5B_nodesize(const H5F_t *f, const H5B_shared_t *shared,
-			   size_t *total_nkey_size);
-H5_DLL herr_t H5B_create (H5F_t *f, hid_t dxpl_id, const H5B_class_t *type, void *udata,
-			   haddr_t *addr_p/*out*/);
-H5_DLL herr_t H5B_find (H5F_t *f, hid_t dxpl_id, const H5B_class_t *type, haddr_t addr,
-			 void *udata);
-H5_DLL herr_t H5B_insert (H5F_t *f, hid_t dxpl_id, const H5B_class_t *type, haddr_t addr,
-                           void *udata);
-H5_DLL herr_t H5B_iterate (H5F_t *f, hid_t dxpl_id, const H5B_class_t *type, H5B_operator_t
-                            op, haddr_t addr, void *udata);
-H5_DLL herr_t H5B_remove(H5F_t *f, hid_t dxpl_id, const H5B_class_t *type, haddr_t addr,
-			  void *udata);
-H5_DLL herr_t H5B_delete(H5F_t *f, hid_t dxpl_id, const H5B_class_t *type, haddr_t addr,
-                        void *udata);
-H5_DLL herr_t H5B_debug (H5F_t *f, hid_t dxpl_id, haddr_t addr, FILE * stream,
-			  int indent, int fwidth, const H5B_class_t *type,
-			  void *udata);
-#endif
+H5_DLL herr_t H5B_create(H5F_t *f, hid_t dxpl_id, const H5B_class_t *type,
+    void *udata, haddr_t *addr_p/*out*/);
+H5_DLL herr_t H5B_find(H5F_t *f, hid_t dxpl_id, const H5B_class_t *type,
+    haddr_t addr, void *udata);
+H5_DLL herr_t H5B_insert(H5F_t *f, hid_t dxpl_id, const H5B_class_t *type,
+    haddr_t addr, void *udata);
+H5_DLL herr_t H5B_iterate(H5F_t *f, hid_t dxpl_id, const H5B_class_t *type,
+    haddr_t addr, H5B_operator_t op, void *udata);
+H5_DLL herr_t H5B_get_info(H5F_t *f, hid_t dxpl_id, const H5B_class_t *type,
+    haddr_t addr, H5B_info_t *bt_info, H5B_operator_t op, void *udata);
+H5_DLL herr_t H5B_remove(H5F_t *f, hid_t dxpl_id, const H5B_class_t *type,
+    haddr_t addr, void *udata);
+H5_DLL herr_t H5B_delete(H5F_t *f, hid_t dxpl_id, const H5B_class_t *type,
+    haddr_t addr, void *udata);
+H5_DLL H5B_shared_t *H5B_shared_new(const H5F_t *f, const H5B_class_t *type,
+    size_t sizeof_rkey);
+H5_DLL herr_t H5B_shared_free(void *_shared);
+H5_DLL herr_t H5B_debug(H5F_t *f, hid_t dxpl_id, haddr_t addr, FILE * stream,
+    int indent, int fwidth, const H5B_class_t *type, void *udata);
+H5_DLL htri_t H5B_valid(H5F_t *f, hid_t dxpl_id, const H5B_class_t *type,
+    haddr_t addr);
+#endif /* _H5Bprivate_H */
+

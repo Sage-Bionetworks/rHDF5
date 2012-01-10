@@ -21,34 +21,13 @@
  *   -1 to -9 : compression level
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <math.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-
 /* our header files */
-#include "hdf5.h"
-#include "H5private.h"
+#include "h5test.h"
 #include "h5tools_utils.h"
 
 #ifdef H5_HAVE_FILTER_DEFLATE
 
 #include <zlib.h>
-
-#if defined(MSDOS) || defined(OS2) || defined(_WIN32)
-#  include <fcntl.h>
-#  include <io.h>
-#  define SET_BINARY_MODE(file)     setmode(fileno(file), O_BINARY)
-#else
-#  define SET_BINARY_MODE(file)     /* nothing */
-#endif  /* MSDOS || OS2 || _WIN32 */
 
 #ifdef VMS
 #  define unlink        delete
@@ -60,10 +39,6 @@
 #  define GZ_SUFFIX     "-gz"
 #  define fileno(file)  file->__file
 #endif  /* RISCOS */
-
-#if defined(__MWERKS__) && __dest_os != __be_os && __dest_os != __win32_os
-#  include <unix.h>     /* for fileno */
-#endif  /* __MWERKS__ ... */
 
 #ifndef GZ_SUFFIX
 #  define GZ_SUFFIX     ".gz"
@@ -86,11 +61,14 @@
 #define FALSE   (!TRUE)
 #endif  /* FALSE */
 
+#ifndef S_IRWXU
+#define S_IRWXU (_S_IREAD|_S_IWRITE)
+#endif
 
 /* internal variables */
-static const char *prog;
-static const char *option_prefix;
-static char *filename;
+static const char *prog=NULL;
+static const char *option_prefix=NULL;
+static char *filename=NULL;
 static int compress_percent = 0;
 static int compress_level = Z_DEFAULT_COMPRESSION;
 static int output, random_test = FALSE;
@@ -197,6 +175,7 @@ cleanup(void)
 {
     if (!getenv("HDF5_NOCLEANUP"))
         unlink(filename);
+    free(filename);
 }
 
 static void
@@ -214,9 +193,9 @@ write_file(Bytef *source, uLongf sourceLen)
     if (!dest)
         error("out of memory");
 
-    gettimeofday(&timer_start, NULL);
+    HDgettimeofday(&timer_start, NULL);
     compress_buffer(dest, &destLen, source, sourceLen);
-    gettimeofday(&timer_stop, NULL);
+    HDgettimeofday(&timer_stop, NULL);
 
     compression_time += ((double)timer_stop.tv_sec +
                             ((double)timer_stop.tv_usec) / MICROSECOND) -
@@ -314,10 +293,11 @@ uncompress_buffer(Bytef *dest, uLongf *destLen, const Bytef *source,
  * Programmer:  Bill Wendling, 06. June 2002
  * Modifications:
  */
+#define ZIP_PERF_FILE "zip_perf.data"
 static void
 get_unique_name(void)
 {
-    const char *prefix = NULL, *tmpl = "zip_perf.data";
+    const char *prefix = NULL;
     const char *env = getenv("HDF5_PREFIX");
 
     if (env)
@@ -327,19 +307,20 @@ get_unique_name(void)
         prefix = option_prefix;
 
     if (prefix)
-	/* 2 = 1 for '/' + 1 for null terminator */
-	filename = (char *) HDmalloc(strlen(prefix) + strlen(tmpl) + 2);
+        /* 2 = 1 for '/' + 1 for null terminator */
+        filename = (char *) HDmalloc(strlen(prefix) + strlen(ZIP_PERF_FILE) + 2);
     else
-	filename = (char *) HDmalloc(strlen(tmpl) + 1);
+        filename = (char *) HDmalloc(strlen(ZIP_PERF_FILE) + 1);
 
     if (!filename)
         error("out of memory");
 
+    filename[0] = 0;
     if (prefix){
-	strcpy(filename, prefix);
-	strcat(filename, "/");
+        strcpy(filename, prefix);
+        strcat(filename, "/");
     }
-    strcat(filename, tmpl);
+    strcat(filename, ZIP_PERF_FILE);
 }
 
 /*
@@ -430,9 +411,9 @@ static void
 fill_with_random_data(Bytef *src, uLongf src_len)
 {
     register unsigned u;
-    struct stat stat_buf;
+    h5_stat_t stat_buf;
 
-    if (stat("/dev/urandom", &stat_buf) == 0) {
+    if (HDstat("/dev/urandom", &stat_buf) == 0) {
         uLongf len = src_len;
         Bytef *buf = src;
         int fd = HDopen("/dev/urandom", O_RDONLY, 0);
@@ -508,7 +489,7 @@ do_write_test(unsigned long file_size, unsigned long min_buf_size,
         printf("\n");
 
         /* do uncompressed data write */
-        gettimeofday(&timer_start, NULL);
+        HDgettimeofday(&timer_start, NULL);
         output = HDopen(filename, O_RDWR | O_CREAT, S_IRWXU);
 
         if (output == -1)
@@ -534,7 +515,7 @@ do_write_test(unsigned long file_size, unsigned long min_buf_size,
         }
 
         close(output);
-        gettimeofday(&timer_stop, NULL);
+        HDgettimeofday(&timer_stop, NULL);
 
         total_time = ((double)timer_stop.tv_sec +
                             ((double)timer_stop.tv_usec) / MICROSECOND) -
@@ -554,13 +535,13 @@ do_write_test(unsigned long file_size, unsigned long min_buf_size,
             error(strerror(errno));
 
         report_once_flag = 1;
-        gettimeofday(&timer_start, NULL);
+        HDgettimeofday(&timer_start, NULL);
 
         for (total_len = 0; total_len < file_size; total_len += src_len)
             write_file(src, src_len);
 
         close(output);
-        gettimeofday(&timer_stop, NULL);
+        HDgettimeofday(&timer_stop, NULL);
 
         total_time = ((double)timer_stop.tv_sec +
                             ((double)timer_stop.tv_usec) / MICROSECOND) -

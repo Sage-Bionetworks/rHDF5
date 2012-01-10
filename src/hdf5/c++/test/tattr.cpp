@@ -34,7 +34,6 @@
 #endif  // H5_NO_STD
 #endif
 
-#include "testhdf5.h"	// C test header file
 #include "H5Cpp.h"	// C++ API header file
 
 #ifndef H5_NO_NAMESPACE
@@ -53,12 +52,12 @@ const int SPACE1_DIM1 = 3;
 const int SPACE1_DIM2 = 15;
 const int SPACE1_DIM3 = 13;
 
-/* Object Names */
+/* Object names */
 const H5std_string DSET1_NAME("Dataset1");
 const H5std_string GROUP1_NAME("/Group1");
 const H5std_string TYPE1_NAME("/Type");
 
-/* Attribute Names, Rank & Dimensions */
+/* Attribute Rank & Dimensions */
 const H5std_string ATTR1_NAME("Attr1");
 const int ATTR1_RANK = 1;
 const int ATTR1_DIM1 = 3;
@@ -109,7 +108,7 @@ int attr_data1a[ATTR1_DIM1]={256,11945,-22107};
 **      Tests integer attributes on both datasets and groups
 **
 ****************************************************************/
-static void test_attr_basic_write(void)
+static void test_attr_basic_write()
 {
     hsize_t dims1[] = {SPACE1_DIM1, SPACE1_DIM2, SPACE1_DIM3};
     hsize_t dims2[] = {ATTR1_DIM1};
@@ -118,7 +117,7 @@ static void test_attr_basic_write(void)
     int     i;
 
     // Output message about test being performed
-    SUBTEST("Testing Basic Attribute Writing Functions");
+    SUBTEST("Basic Attribute Writing Functions");
 
     try {
 	// Create file
@@ -231,13 +230,13 @@ static void test_attr_basic_write(void)
 **  test_attr_rename(): Test renaming attribute function.
 **
 ****************************************************************/
-static void test_attr_rename(void)
+static void test_attr_rename()
 {
     int read_data1[ATTR1_DIM1]={0}; // Buffer for reading the attribute
     int i;
 
 	// Output message about test being performed
-    SUBTEST("Testing Rename Attribute Function");
+    SUBTEST("Rename Attribute Function");
 
     try {
 	// Open file
@@ -303,12 +302,12 @@ static void test_attr_rename(void)
 **  test_attr_basic_read(): Test basic read attribute.
 **
 ********************************************************************/
-static void test_attr_basic_read(void)
+static void test_attr_basic_read()
 {
     int i, j;
 
     // Output message about test being performed
-    SUBTEST("Testing Basic Attribute Reading Functions");
+    SUBTEST("Basic Attribute Reading Functions");
 
     try {
 	// Open file
@@ -371,15 +370,15 @@ static void test_attr_basic_read(void)
 **  test_attr_compound_write(): Tests compound datatype attributes
 **
 ****************************************************************/
-static void test_attr_compound_write(void)
+static void test_attr_compound_write()
 {
 
-    // Output message about test being performed
-    SUBTEST("Testing Writing Compound Attribute Functions");
+	// Output message about test being performed
+    SUBTEST("Multiple Attribute Functions");
 
     try {
 	// Create file
-	H5File fid1(FILENAME, H5F_ACC_TRUNC);
+	H5File fid1(FILENAME.c_str(), H5F_ACC_TRUNC);
 
 	// Create dataspace for dataset
 	hsize_t		dims1[] = {SPACE1_DIM1, SPACE1_DIM2, SPACE1_DIM3};
@@ -430,7 +429,7 @@ static void test_attr_compound_write(void)
 **  test_attr_compound_read(): Test basic H5A (attribute) code.
 **
 ****************************************************************/
-static void test_attr_compound_read(void)
+static void test_attr_compound_read()
 {
     hsize_t dims[ATTR_MAX_DIMS];	// Attribute dimensions
     size_t      size;   // Attribute datatype size as stored in file
@@ -439,7 +438,7 @@ static void test_attr_compound_read(void)
     int     i,j;
 
     // Output message about test being performed
-    SUBTEST("Testing Reading Compound Attribute Functions");
+    SUBTEST("Basic Attribute Functions");
 
     try {
 	// Open file
@@ -565,10 +564,10 @@ static void test_attr_compound_read(void)
 **  test_attr_scalar_write(): Test scalar attribute writing functionality.
 **
 ****************************************************************/
-static void test_attr_scalar_write(void)
+static void test_attr_scalar_write()
 {
     // Output message about test being performed
-    SUBTEST("Testing Basic Scalar Attribute Writing Functions");
+    SUBTEST("Basic Scalar Attribute Writing Functions");
 
     try {
 	// Create file
@@ -619,10 +618,10 @@ static void test_attr_scalar_write(void)
 **  test_attr_scalar_read(): Test scalar attribute reading functionality.
 **
 ****************************************************************/
-static void test_attr_scalar_read(void)
+static void test_attr_scalar_read()
 {
     // Output message about test being performed
-    SUBTEST("Testing Basic Scalar Attribute Reading Functions");
+    SUBTEST("Basic Scalar Attribute Reading Functions");
 
     try {
 	// Open file
@@ -663,10 +662,10 @@ static void test_attr_scalar_read(void)
 **  test_attr_mult_write(): Test multiple attributes
 **
 ****************************************************************/
-static void test_attr_mult_write(void)
+static void test_attr_mult_write()
 {
     // Output message about test being performed
-    SUBTEST("Testing Multiple Attribute Writing Functions");
+    SUBTEST("Multiple Attribute Writing Functions");
 
     try {
 	// Create file
@@ -735,7 +734,7 @@ static void test_attr_mult_write(void)
 **  test_attr_mult_read(): Test reading multiple attributes.
 **
 ****************************************************************/
-static void test_attr_mult_read(void)
+static void test_attr_mult_read()
 {
     int     read_data1[ATTR1_DIM1]={0}; // Buffer for reading 1st attribute
     int     read_data2[ATTR2_DIM1][ATTR2_DIM2]={{0}}; // Buffer for reading 2nd attribute
@@ -743,7 +742,7 @@ static void test_attr_mult_read(void)
     int     i,j,k;
 
 	// Output message about test being performed
-    SUBTEST("Testing Multiple Attribute Reading Functions");
+    SUBTEST("Multiple Attribute Reading Functions");
 
     try {
 	// Open file
@@ -927,12 +926,12 @@ static void test_attr_mult_read(void)
 **			hdf5 objects.
 **
 ****************************************************************/
-static void test_attr_delete(void)
+static void test_attr_delete()
 {
     H5std_string  attr_name; // Buffer for attribute names
 
-    // Output message about test being performed
-    SUBTEST("Testing Removing Attribute Function");
+	// Output message about test being performed
+    SUBTEST("Removing Attribute Function");
 
     try {
 	// Open file
@@ -1022,15 +1021,17 @@ static void test_attr_delete(void)
 **				in attributes.
 **
 ****************************************************************/
-static void test_attr_dtype_shared(void)
+static void test_attr_dtype_shared()
 {
     int data=8;                 /* Data to write */
     int rdata=0;                /* Read read in */
+#ifndef H5_NO_DEPRECATED_SYMBOLS
     H5G_stat_t statbuf;         /* Object's information */
+#endif /* H5_NO_DEPRECATED_SYMBOLS */
     h5_stat_size_t filesize;             /* Size of file after modifications */
 
     // Output message about test being performed
-    SUBTEST("Testing Attributes with Shared Datatypes");
+    SUBTEST("Shared Datatypes with Attributes");
 
     try {
 	// Create a file
@@ -1041,9 +1042,9 @@ static void test_attr_dtype_shared(void)
 
 	// Get size of file
 	h5_stat_size_t empty_filesize;       // Size of empty file
-	empty_filesize = h5_get_file_size(FILENAME.c_str());
+	empty_filesize = h5_get_file_size(FILENAME.c_str(), H5P_DEFAULT);
 	if (empty_filesize < 0)
-	TestErrPrintf("Line %d: file size wrong!\n",__LINE__);
+            TestErrPrintf("Line %d: file size wrong!\n", __LINE__);
 
 	// Open the file again
 	fid1.openFile(FILENAME, H5F_ACC_RDWR);
@@ -1059,43 +1060,52 @@ static void test_attr_dtype_shared(void)
 	// Commit datatype to file
 	dtype.commit(fid1, TYPE1_NAME);
 
+#ifndef H5_NO_DEPRECATED_SYMBOLS
 	// Check reference count on named datatype
 	fid1.getObjinfo(TYPE1_NAME, statbuf);
 	verify_val((int)statbuf.nlink, 1, "DataType::getObjinfo", __LINE__, __FILE__);
+#endif /* H5_NO_DEPRECATED_SYMBOLS */
 
 	// Create dataspace for dataset
 	DataSpace dspace;
 
-	// Create dataset
 	DataSet dset = fid1.createDataSet(DSET1_NAME, dtype, dspace);
 
+#ifndef H5_NO_DEPRECATED_SYMBOLS
 	// Check reference count on named datatype
 	fid1.getObjinfo(TYPE1_NAME, statbuf);
 	verify_val((int)statbuf.nlink, 2, "H5File::getObjinfo", __LINE__, __FILE__);
+#endif /* H5_NO_DEPRECATED_SYMBOLS */
 
 	// Create attribute on dataset
 	Attribute attr = dset.createAttribute(ATTR1_NAME,dtype,dspace);
 
+#ifndef H5_NO_DEPRECATED_SYMBOLS
 	// Check reference count on named datatype
 	fid1.getObjinfo(TYPE1_NAME, statbuf);
 	verify_val((int)statbuf.nlink, 3, "DataSet::getObjinfo", __LINE__, __FILE__);
+#endif /* H5_NO_DEPRECATED_SYMBOLS */
 
-	// Close attribute
-	attr.close();
+        // Close attribute
+        attr.close();
 
 	// Delete attribute
 	dset.removeAttr(ATTR1_NAME);
 
+#ifndef H5_NO_DEPRECATED_SYMBOLS
 	// Check reference count on named datatype
 	fid1.getObjinfo(TYPE1_NAME, statbuf);
 	verify_val((int)statbuf.nlink, 2, "DataSet::getObjinfo after DataSet::removeAttr", __LINE__, __FILE__);
+#endif /* H5_NO_DEPRECATED_SYMBOLS */
 
-	// Create attribute on dataset
-	attr = dset.createAttribute(ATTR1_NAME,dtype,dspace);
+        // Create attribute on dataset
+        attr = dset.createAttribute(ATTR1_NAME,dtype,dspace);
 
+#ifndef H5_NO_DEPRECATED_SYMBOLS
 	// Check reference count on named datatype
 	fid1.getObjinfo(TYPE1_NAME, statbuf);
 	verify_val((int)statbuf.nlink, 3, "DataSet::createAttribute", __LINE__, __FILE__);
+#endif /* H5_NO_DEPRECATED_SYMBOLS */
 
 	// Write data into the attribute
 	attr.write(PredType::NATIVE_INT,&data);
@@ -1128,18 +1138,21 @@ static void test_attr_dtype_shared(void)
 	delete attr2;
 	delete dset2;
 
+#ifndef H5_NO_DEPRECATED_SYMBOLS
 	// Check reference count on named datatype
 	fid1.getObjinfo(TYPE1_NAME, statbuf);
 	verify_val((int)statbuf.nlink, 3, "DataSet::openAttribute", __LINE__, __FILE__);
-
+#endif /* H5_NO_DEPRECATED_SYMBOLS */
 	} // end of second enclosing
 
 	// Unlink the dataset
 	fid1.unlink(DSET1_NAME);
 
+#ifndef H5_NO_DEPRECATED_SYMBOLS
 	// Check reference count on named datatype
 	fid1.getObjinfo(TYPE1_NAME, statbuf);
 	verify_val((int)statbuf.nlink, 1, "H5File::unlink", __LINE__, __FILE__);
+#endif /* H5_NO_DEPRECATED_SYMBOLS */
 
 	// Unlink the named datatype
 	fid1.unlink(TYPE1_NAME);
@@ -1148,7 +1161,7 @@ static void test_attr_dtype_shared(void)
 	fid1.close();
 
 	// Check size of file
-	filesize=h5_get_file_size(FILENAME.c_str());
+	filesize = h5_get_file_size(FILENAME.c_str(), H5P_DEFAULT);
 	verify_val((long)filesize, (long)empty_filesize, "Checking file size", __LINE__, __FILE__);
 
 	PASSED();
@@ -1172,10 +1185,10 @@ const H5std_string ATTR_VL_STR_NAME("String_attr");
 const H5std_string ATTRSTR_DATA("String Attribute");
 const int ATTR_LEN = 17;
 
-static void test_string_attr(void)
+static void test_string_attr()
 {
     // Output message about test being performed
-    SUBTEST("Testing I/O on FL and VL String Attributes");
+    SUBTEST("I/O on FL and VL String Attributes");
 
     try {
 	// Create file
@@ -1291,9 +1304,10 @@ static void test_string_attr(void)
 #ifdef __cplusplus
 extern "C"
 #endif
-void test_attr(void)
+void test_attr()
 {
     // Output message about test being performed
+    //MESSAGE("Testing Attributes\n");
     MESSAGE(5, ("Testing Attributes\n"));
 
     test_attr_basic_write();	// Test basic H5A writing code
@@ -1333,7 +1347,7 @@ void test_attr(void)
 #ifdef __cplusplus
 extern "C"
 #endif
-void cleanup_attr(void)
+void cleanup_attr()
 {
     HDremove(FILENAME.c_str());
 }

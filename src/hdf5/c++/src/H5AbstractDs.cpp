@@ -42,6 +42,13 @@ namespace H5 {
 AbstractDs::AbstractDs(){}
 
 //--------------------------------------------------------------------------
+// Function:	AbstractDs default constructor
+///\brief	Creates an AbstractDs instance using an existing id.
+// Programmer	Binh-Minh Ribler - 2000
+//--------------------------------------------------------------------------
+AbstractDs::AbstractDs(const hid_t ds_id){}
+
+//--------------------------------------------------------------------------
 // Function:	AbstractDs copy constructor
 ///\brief	Copy constructor: makes a copy of the original AbstractDs object.
 // Programmer	Binh-Minh Ribler - 2000
@@ -74,15 +81,26 @@ H5T_class_t AbstractDs::getTypeClass() const
 
    // Gets the class of the datatype and validate it before returning
    H5T_class_t type_class = H5Tget_class(datatype_id);
-   if( type_class != H5T_NO_CLASS )
-      return( type_class );
-   else
+
+   // Close temporary datatype_id
+   herr_t ret_value = H5Tclose(datatype_id);
+   if (ret_value < 0)
+   {
+      if (fromClass() == "DataSet")
+	 throw DataTypeIException("DataSet::getTypeClass", "H5Tclose failed");
+      else if (fromClass() == "Attribute")
+	 throw DataTypeIException("Attribute::getTypeClass", "H5Tclose failed");
+   }
+
+   // Check on the returned type_class
+   if (type_class == H5T_NO_CLASS)
    {
       if (fromClass() == "DataSet")
 	 throw DataTypeIException("DataSet::getTypeClass", "H5Tget_class returns H5T_NO_CLASS");
       else if (fromClass() == "Attribute")
 	 throw DataTypeIException("Attribute::getTypeClass", "H5Tget_class returns H5T_NO_CLASS");
    }
+   return(type_class);
 }
 
 //--------------------------------------------------------------------------
@@ -117,7 +135,7 @@ DataType AbstractDs::getDataType() const
 ///		can be a dataset or an attribute.
 ///\return	ArrayType instance
 ///\exception	H5::DataTypeIException
-// Programmer	Binh-Minh Ribler - 2000
+// Programmer	Binh-Minh Ribler - Jul, 2005
 //--------------------------------------------------------------------------
 ArrayType AbstractDs::getArrayType() const
 {
@@ -273,7 +291,7 @@ StrType AbstractDs::getStrType() const
 ///		which can be a dataset or an attribute.
 ///\return	VarLenType instance
 ///\exception	H5::DataTypeIException
-// Programmer	Binh-Minh Ribler - 2000
+// Programmer	Binh-Minh Ribler - Jul, 2005
 //--------------------------------------------------------------------------
 VarLenType AbstractDs::getVarLenType() const
 {

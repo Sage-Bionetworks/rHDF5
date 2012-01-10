@@ -30,9 +30,9 @@ class H5_DLLCPP DataType : public H5Object {
 	DataType( const DataType& original );
 
 	// Creates a datatype by way of dereference.
-	DataType(H5Object& obj, void* ref, H5R_type_t ref_type = H5R_OBJECT);
-	DataType(H5File& h5file, void* ref, H5R_type_t ref_type = H5R_OBJECT);
-	DataType(Attribute& attr, void* ref, H5R_type_t ref_type = H5R_OBJECT);
+	DataType(H5Object& obj, const void* ref, H5R_type_t ref_type = H5R_OBJECT);
+	DataType(H5File& h5file, const void* ref, H5R_type_t ref_type = H5R_OBJECT);
+	DataType(Attribute& attr, const void* ref, H5R_type_t ref_type = H5R_OBJECT);
 
 	// Closes this datatype.
 	virtual void close();
@@ -73,12 +73,6 @@ class H5_DLLCPP DataType : public H5Object {
 	// Locks a datatype.
 	void lock() const;
 
-	// Returns a pointer to the current global overflow function.
-	H5T_overflow_t getOverflow(void) const;
-
-	// Sets the overflow handler to a specified function.
-	void setOverflow(H5T_overflow_t func) const;
-
 	// Returns the size of a datatype.
 	size_t getSize() const;
 
@@ -107,13 +101,15 @@ class H5_DLLCPP DataType : public H5Object {
 	// Checks whether this datatype is a variable-length string.
 	bool isVariableStr() const;
 
+#ifndef H5_NO_DEPRECATED_SYMBOLS
 	// Retrieves the type of object that an object reference points to.
 	H5G_obj_t getObjType(void *ref, H5R_type_t ref_type = H5R_OBJECT) const;
+#endif /* H5_NO_DEPRECATED_SYMBOLS */
 
 	// Retrieves a dataspace with the region pointed to selected.
 	DataSpace getRegion(void *ref, H5R_type_t ref_type = H5R_DATASET_REGION) const;
 
-	// Returns this class name
+	///\brief Returns this class name
 	virtual H5std_string fromClass () const { return("DataType"); }
 
 	// Creates a copy of an existing DataType using its id

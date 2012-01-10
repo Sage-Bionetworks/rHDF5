@@ -13,8 +13,11 @@
  * access to either file, you may request a copy from help@hdfgroup.org.     *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include <string>
+#ifdef H5_VMS
+#include <iostream>
+#endif /*H5_VMS*/
 
+#include <string>
 #include "H5Include.h"
 #include "H5Exception.h"
 #include "H5Library.h"
@@ -126,7 +129,7 @@ int IdComponent::getCounter() const
 //--------------------------------------------------------------------------
 // Function:	hdfObjectType
 ///\brief	Given an id, returns the type of the object.
-///return	a valid HDF object type, which may be one of the following:
+///\return	a valid HDF object type, which may be one of the following:
 ///		\li \c H5I_FILE
 ///		\li \c H5I_GROUP
 ///		\li \c H5I_DATATYPE
@@ -140,7 +143,7 @@ int IdComponent::getCounter() const
 H5I_type_t IdComponent::getHDFObjType(const hid_t obj_id)
 {
     H5I_type_t id_type = H5Iget_type(obj_id);
-    if (id_type <= H5I_BADID || id_type >= H5I_NGROUPS)
+    if (id_type <= H5I_BADID || id_type >= H5I_NTYPES)
 	return H5I_BADID; // invalid
     else
 	return id_type; // valid type
@@ -158,6 +161,10 @@ H5I_type_t IdComponent::getHDFObjType(const hid_t obj_id)
 //		copy the id from rhs to this object, and increment the
 //		reference counter of the id to indicate that another object
 //		is referencing that id.
+// Modification
+//	2010/5/9 - BMR
+//		Removed close() and incRefCount() because setId/p_setId takes
+//		care of close() and setId takes care incRefCount().
 // Programmer	Binh-Minh Ribler - 2000
 //--------------------------------------------------------------------------
 IdComponent& IdComponent::operator=( const IdComponent& rhs )
@@ -165,17 +172,14 @@ IdComponent& IdComponent::operator=( const IdComponent& rhs )
     if (this != &rhs)
     {
 	// handling references to this id
-	try {
-	    close();
+  	try {
+	    setId(rhs.getId());
+	    // Note: a = b, so there are two objects with the same hdf5 id
+	    // that's why incRefCount is needed, and it is called by setId
 	}
 	catch (Exception close_error) {
 	    throw FileIException(inMemFunc("operator="), close_error.getDetailMsg());
 	}
-
-	// copy the data members from the rhs object
-	p_setId(rhs.getId());
-	incRefCount(getId()); // a = b, so there are two objects with the same
-			      // hdf5 id
     }
     return *this;
 }
@@ -187,9 +191,8 @@ IdComponent& IdComponent::operator=( const IdComponent& rhs )
 ///\exception	H5::IdComponentException when the attempt to close the HDF5
 ///		object fails
 // Description:
-//		The underlaying reference counting in the C library ensures
-//		that the current valid id of this object is properly closed.
-//		Then the object's id is reset to the new id.
+//		p_setId ensures that the current valid id of this object is
+//		properly closed before resetting the object's id to the new id.
 // Programmer	Binh-Minh Ribler - 2000
 // Modification
 //	2008/7/23 - BMR
@@ -234,13 +237,19 @@ IdComponent::~IdComponent() {}
 ///		where the failure occurs.  The class-name is provided by
 ///		fromClass().  This string will be used by a base class when
 ///		an exception is thrown.
-// Programmer	Binh-Minh Ribler - Oct 10, 2005
+// Programmer	Binh-Minh Ribler - Aug 6, 2005
 //--------------------------------------------------------------------------
 H5std_string IdComponent::inMemFunc(const char* func_name) const
 {
+#ifdef H5_VMS
+   H5std_string full_name = fromClass();
+   full_name.append("::");
+   full_name.append(func_name);
+#else
    H5std_string full_name = func_name;
    full_name.insert(0, "::");
    full_name.insert(0, fromClass());
+#endif /*H5_VMS*/
    return (full_name);
 }
 
@@ -268,7 +277,7 @@ H5std_string IdComponent::p_get_file_name() const
    // Preliminary call to H5Fget_name to get the length of the file name
    ssize_t name_size = H5Fget_name(temp_id, NULL, 0);
 
-   // If H5Fget_name returns a negative value, raise an exception,
+   // If H5Aget_name returns a negative value, raise an exception,
    if( name_size < 0 )
    {
       throw IdComponentException("", "H5Fget_name failed");
@@ -290,39 +299,6 @@ H5std_string IdComponent::p_get_file_name() const
    return(file_name);
 }
 
-//--------------------------------------------------------------------------
-// Function:	IdComponent::p_get_refobj_type (protected)
-// Purpose	Retrieves the type of object that an object reference points to.
-// Parameters
-//		ref      - IN: Reference to query
-//		ref_type - IN: Type of reference to query
-// Return	An object type, which can be one of the following:
-//			H5G_LINK Object is a symbolic link.
-//			H5G_GROUP Object is a group.
-//			H5G_DATASET Object is a dataset.
-//			H5G_TYPE Object is a named datatype
-// Exception	H5::IdComponentException
-// Programmer	Binh-Minh Ribler - May, 2004
-//--------------------------------------------------------------------------
-H5G_obj_t IdComponent::p_get_refobj_type(void *ref, H5R_type_t ref_type) const
-{
-#ifdef H5_WANT_H5_V1_4_COMPAT
-   H5G_obj_t obj_type = H5Rget_object_type(getId(), ref);
-#else
-   H5G_obj_t obj_type = H5Rget_obj_type(getId(), ref_type, ref);
-#endif
-
-   if (obj_type == H5G_UNKNOWN)
-   {
-#ifdef H5_WANT_H5_V1_4_COMPAT
-      throw IdComponentException("", "H5Rget_object_type failed");
-#else
-      throw IdComponentException("", "H5Rget_obj_type failed");
-#endif
-   }
-   return(obj_type);
-}
-
 //
 // Local functions used in this class
 //
@@ -337,7 +313,7 @@ H5G_obj_t IdComponent::p_get_refobj_type(void *ref, H5R_type_t ref_type) const
 bool IdComponent::p_valid_id(const hid_t obj_id)
 {
     H5I_type_t id_type = H5Iget_type(obj_id);
-    if (id_type <= H5I_BADID || id_type >= H5I_NGROUPS)
+    if (id_type <= H5I_BADID || id_type >= H5I_NTYPES)
 	return false;
     else
 	return true;

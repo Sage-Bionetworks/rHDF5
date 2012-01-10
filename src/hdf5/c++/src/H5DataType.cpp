@@ -93,14 +93,14 @@ DataType::DataType( const H5T_class_t type_class, size_t size ) : H5Object()
 ///\param	ref_type - IN: Reference type - default to H5R_OBJECT
 ///\exception	H5::ReferenceException
 ///\par Description
-///		\c obj can be DataSet, Group, or named DataType, that 
+///		\c obj can be DataSet, Group, or named DataType, that
 ///		is a datatype that has been named by DataType::commit.
 // Programmer	Binh-Minh Ribler - Oct, 2006
 // Modification
 //	Jul, 2008
 //		Added for application convenience.
 //--------------------------------------------------------------------------
-DataType::DataType(H5Object& obj, void* ref, H5R_type_t ref_type) : H5Object()
+DataType::DataType(H5Object& obj, const void* ref, H5R_type_t ref_type) : H5Object()
 {
     try {
 	id = p_dereference(obj.getId(), ref, ref_type);
@@ -123,7 +123,7 @@ DataType::DataType(H5Object& obj, void* ref, H5R_type_t ref_type) : H5Object()
 //	Jul, 2008
 //		Added for application convenience.
 //--------------------------------------------------------------------------
-DataType::DataType(H5File& h5file, void* ref, H5R_type_t ref_type) : H5Object()
+DataType::DataType(H5File& h5file, const void* ref, H5R_type_t ref_type) : H5Object()
 {
     try {
 	id = p_dereference(h5file.getId(), ref, ref_type);
@@ -146,7 +146,7 @@ DataType::DataType(H5File& h5file, void* ref, H5R_type_t ref_type) : H5Object()
 //	Jul, 2008
 //		Added for application convenience.
 //--------------------------------------------------------------------------
-DataType::DataType(Attribute& attr, void* ref, H5R_type_t ref_type) : H5Object()
+DataType::DataType(Attribute& attr, const void* ref, H5R_type_t ref_type) : H5Object()
 {
     try {
 	id = p_dereference(attr.getId(), ref, ref_type);
@@ -160,9 +160,6 @@ DataType::DataType(Attribute& attr, void* ref, H5R_type_t ref_type) : H5Object()
 // Function:	DataType default constructor
 ///\brief	Default constructor: Creates a stub datatype
 // Programmer	Binh-Minh Ribler - 2000
-// Modification
-//	Jul, 08 No longer inherit data member 'id' from IdComponent.
-//		- bugzilla 1068
 //--------------------------------------------------------------------------
 DataType::DataType() : H5Object(), id(0) {}
 
@@ -170,9 +167,6 @@ DataType::DataType() : H5Object(), id(0) {}
 // Function:	DataType copy constructor
 ///\brief	Copy constructor: makes a copy of the original DataType object.
 // Programmer	Binh-Minh Ribler - 2000
-// Modification
-//	Jul, 08 No longer inherit data member 'id' from IdComponent.
-//		- bugzilla 1068
 //--------------------------------------------------------------------------
 DataType::DataType(const DataType& original) : H5Object(original)
 {
@@ -211,7 +205,7 @@ void DataType::copy( const DataType& like_type )
 //--------------------------------------------------------------------------
 // Function:	DataType::copy
 ///\brief	Copies the datatype of the given dataset to this datatype object
-///\param	dset - IN: Dataset 
+///\param	dset - IN: Dataset
 ///\exception	H5::DataTypeIException
 // Programmer	Binh-Minh Ribler - Jan, 2007
 ///\par Description
@@ -279,7 +273,7 @@ bool DataType::operator==(const DataType& compared_type ) const
 // Function:	DataType::p_commit (private)
 //\brief	Commits a transient datatype to a file, creating a new
 //		named datatype
-//\param	loc_id - IN: The id of either a file, group, dataset, named 
+//\param	loc_id - IN: The id of either a file, group, dataset, named
 //			 datatype, or attribute.
 //\param	name - IN: Name of the datatype
 //\exception	H5::DataTypeIException
@@ -292,11 +286,9 @@ bool DataType::operator==(const DataType& compared_type ) const
 void DataType::p_commit(hid_t loc_id, const char* name)
 {
    // Call C routine to commit the transient datatype
-   herr_t ret_value = H5Tcommit(loc_id, name, id);
+   herr_t ret_value = H5Tcommit2(loc_id, name, id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
    if( ret_value < 0 )
-   {
-      throw DataTypeIException(inMemFunc("p_commit"), "H5Tcommit failed");
-   }
+      throw DataTypeIException(inMemFunc("p_commit"), "H5Tcommit2 failed");
 }
 
 //--------------------------------------------------------------------------
@@ -423,49 +415,6 @@ void DataType::convert( const DataType& dest, size_t nelmts, void *buf, void *ba
    }
 }
 
-/*
-These two functions may not work properly.  They will be re-evaluated 
-and tested throughly.  BMR - Oct 29, 2005
-*/
-
-//--------------------------------------------------------------------------
-// Function:	DataType::setOverflow
-///\brief	Sets the overflow handler to a specified function.
-///\param	func       - IN: Function to be called when overflow occurs
-///\return	Pointer to a suitable conversion function
-///\exception	H5::DataTypeIException
-///\par Description
-///		The function specified by \a func will be called for all 
-///		data type conversions that result in an overflow.
-///		For more information, please see:
-/// <A HREF="../RM_H5T.html#Datatype-SetOverflow">../RM_H5T.html#Datatype-SetOverflow</A>
-// Programmer	Binh-Minh Ribler - 2004
-//--------------------------------------------------------------------------
-void DataType::setOverflow( H5T_overflow_t func ) const
-{
-   // Call C routine H5Tset_overflow to set the overflow handler
-   herr_t ret_value = H5Tset_overflow( func );
-   if( ret_value < 0 )
-   {
-      throw DataTypeIException(inMemFunc("setOverflow"), "H5Tset_overflow failed");
-   }
-}
-
-//--------------------------------------------------------------------------
-// Function:	DataType::getOverflow
-///\brief	Returns a pointer to the current global overflow function.
-///\return	Pointer to an application-defined function if successful; 
-///		otherwise returns NULL; this can happen if no overflow 
-///		handling function is registered.
-///\exception	H5::DataTypeIException
-// Programmer	Binh-Minh Ribler - 2004
-//--------------------------------------------------------------------------
-H5T_overflow_t DataType::getOverflow(void) const
-{
-   return( H5Tget_overflow());  // C routine
-   // NULL can be returned as well
-}
-
 //--------------------------------------------------------------------------
 // Function:	DataType::lock
 ///\brief	Locks a datatype, making it read-only and non-destructible.
@@ -566,7 +515,7 @@ DataType DataType::getSuper() const
 ///\exception	H5::DataTypeIException
 ///\par Description
 ///		For more information, please see:
-/// <A HREF="../RM_H5T.html#Datatype-Register">../RM_H5T.html#Datatype-Register</A>
+/// http://www.hdfgroup.org/HDF5/doc/RM/RM_H5T.html#Datatype-Register
 // Programmer	Binh-Minh Ribler - 2000
 //--------------------------------------------------------------------------
 void DataType::registerFunc( H5T_pers_t pers, const char* name, const DataType& dest, H5T_conv_t func ) const
@@ -730,17 +679,30 @@ bool DataType::isVariableStr() const
    }
 }
 
+#ifndef H5_NO_DEPRECATED_SYMBOLS
 //--------------------------------------------------------------------------
 // Function:	DataType::getObjType
-///\brief	This function was misnamed and will be deprecated in favor of
-///		H5Object::getRefObjType; please use getRefObjType instead.
+///\brief	Retrieves the type of object that an object reference points to.
+///\param		ref      - IN: Reference to query
+///\param		ref_type - IN: Type of reference to query
+///\return	Object type, which can be one of the following:
+///			\li \c H5G_LINK Object is a symbolic link.
+///			\li \c H5G_GROUP Object is a group.
+///			\li \c H5G_DATASET   Object is a dataset.
+///			\li \c H5G_TYPE Object is a named datatype
+///\exception	H5::DataTypeIException
 // Programmer	Binh-Minh Ribler - May, 2004
-// Note:	Replaced by getRefObjType. - BMR - Jul, 2008
 //--------------------------------------------------------------------------
 H5G_obj_t DataType::getObjType(void *ref, H5R_type_t ref_type) const
 {
-    return(getRefObjType(ref, ref_type));
+   try {
+      return(p_get_obj_type(ref, ref_type));
+   }
+   catch (IdComponentException E) {
+      throw DataTypeIException(inMemFunc("getObjType"), E.getDetailMsg());
+   }
 }
+#endif /* H5_NO_DEPRECATED_SYMBOLS */
 
 //--------------------------------------------------------------------------
 // Function:	DataType::getRegion
@@ -763,15 +725,15 @@ DataSpace DataType::getRegion(void *ref, H5R_type_t ref_type) const
 }
 
 //--------------------------------------------------------------------------
-// Function:	DataType::getId
-// Purpose:	Get the id of this datatype
+// Function:    DataType::getId
+// Purpose:     Get the id of this attribute
 // Modification:
-//	May 2008 - BMR
-//		Class hierarchy is revised to address bugzilla 1068.  Class
-//		AbstractDS and Attribute are moved out of H5Object.  In
-//		addition, member IdComponent::id is moved into subclasses, and
-//		IdComponent::getId now becomes pure virtual function.
-// Programmer	Binh-Minh Ribler - May, 2008
+//      May 2008 - BMR
+//              Class hierarchy is revised to address bugzilla 1068.  Class
+//              AbstractDS and Attribute are moved out of H5Object.  In
+//              addition, member IdComponent::id is moved into subclasses, and
+//              IdComponent::getId now becomes pure virtual function.
+// Programmer   Binh-Minh Ribler - May, 2008
 //--------------------------------------------------------------------------
 hid_t DataType::getId() const
 {
@@ -779,31 +741,28 @@ hid_t DataType::getId() const
 }
 
 //--------------------------------------------------------------------------
-// Function:	DataType::p_setId
-///\brief	Sets the identifier of this datatype to a new value.
+// Function:    DataType::p_setId
+///\brief       Sets the identifier of this object to a new value.
 ///
-///\exception	H5::IdComponentException when the attempt to close the 
-///		currently open datatype fails
+///\exception   H5::IdComponentException when the attempt to close the HDF5
+///             object fails
 // Description:
-//		The underlaying reference counting in the C library ensures
-//		that the current valid id of this object is properly closed.
-//		Then the object's id is reset to the new id.
-// Programmer	Binh-Minh Ribler - 2000
-// Modification
-//	Jul, 08 No longer inherit data member 'id' from IdComponent.
-//		- bugzilla 1068
+//              The underlaying reference counting in the C library ensures
+//              that the current valid id of this object is properly closed.
+//              Then the object's id is reset to the new id.
+// Programmer   Binh-Minh Ribler - 2000
 //--------------------------------------------------------------------------
 void DataType::p_setId(const hid_t new_id)
 {
     // handling references to this old id
     try {
-	close();
+        close();
     }
     catch (Exception close_error) {
-	throw DataTypeIException(inMemFunc("p_setId"), close_error.getDetailMsg());
+        throw DataTypeIException(inMemFunc("p_setId"), close_error.getDetailMsg());
     }
-    // reset object's id to the given id
-    id = new_id;
+   // reset object's id to the given id
+   id = new_id;
 }
 
 //--------------------------------------------------------------------------
@@ -822,10 +781,8 @@ void DataType::close()
 	{
 	    throw DataTypeIException(inMemFunc("close"), "H5Tclose failed");
 	}
-        // reset the id when the datatype that it represents is no longer
-        // referenced
-        if (getCounter() == 0)
-	    id = 0;
+	// reset the id
+	id = 0;
     }
 }
 
@@ -841,14 +798,12 @@ void DataType::close()
 //--------------------------------------------------------------------------
 DataType::~DataType()
 {
-    try {
-	close();
-    }
-    catch (Exception close_error) {
-	cerr << inMemFunc("~DataType - ") << close_error.getDetailMsg() << endl;
-    }
+	try {
+	    close();
+	} catch (Exception close_error) {
+	    cerr << inMemFunc("~DataType - ") << close_error.getDetailMsg() << endl;
+	}
 }
-
 #ifndef H5_NO_NAMESPACE
 } // end namespace
 #endif
