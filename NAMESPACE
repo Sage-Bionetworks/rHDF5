@@ -1,2 +1,3 @@
-useDynLib(rHDF5)
-export(HDF5Execute, HDF5ReadData, HDF5WriteAttribute, HDF5ReadAttribute, HDF5Summary, HDF5WriteData)
+useDynLib(rHDF)
+exportPattern("^[[:alpha:]]+")
+import( Rcpp )
