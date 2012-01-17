@@ -1,5 +1,4 @@
-#include <Rcpp.h>
-#include <hdf5.h>
+#include <rHDF5.h>
 
 RCPP_MODULE(H5P){
         using namespace Rcpp ;
@@ -24,7 +23,7 @@ RCPP_MODULE(H5P){
 //	function("H5Pget_cache" , &H5Pget_cache , "Queries the raw data chunk cache parameters. ") ;
 ///	function("H5Pget_char_encoding" , &H5Pget_char_encoding , "Retrieves the character encoding used to create a string. ") ;
 ////	function("H5Pget_chunk" , &H5Pget_chunk , "Retrieves the size of chunks for the raw data of a chunked layout dataset. ") ;
-	//function("" , & , " ") ;
+	function("H5Pset_alignment" , &H5Pset_alignment , "Sets alignment properties of a file access property list. ") ;
 	//function("" , & , " ") ;
 	//function("" , & , " ") ;
 	//function("" , & , " ") ;

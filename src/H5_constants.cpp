@@ -1,5 +1,5 @@
-#include <Rcpp.h>
-#include <hdf5.h>
+#include <rHDF5.h>
+#include <rHDF5_hsize_t.h>
 
 using namespace Rcpp;
 class H5constants{

@@ -1,5 +1,4 @@
-#include <Rcpp.h>
-#include <hdf5.h>
+#include <rHDF5.h>
 
 RCPP_MODULE(H5T){
         using namespace Rcpp ;

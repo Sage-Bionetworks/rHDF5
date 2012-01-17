@@ -1,5 +1,4 @@
-#include <Rcpp.h>
-#include <hdf5.h>
+#include <rHDF5.h>
 
 RCPP_MODULE(H5S){
         using namespace Rcpp ;
@@ -7,7 +6,7 @@ RCPP_MODULE(H5S){
 	function("H5Sclose" , &H5Sclose , "Releases and terminates access to a dataspace. ") ;
 	function("H5Scopy" , &H5Scopy , "Creates an exact copy of a dataspace. ") ;
 ///	function("H5Screate" , &H5Screate , "Creates a new dataspace of a specified type. ") ;
-////	function("H5Screate_simple" , &H5Screate_simple , "Creates a new simple dataspace and opens it for access. ") ;
+////	function("H5Screate_simple" , &H5Screate_simple , "Creates a new simple dataspace and opens it for access. ") ; ////hsize_t*
 	function("H5Sdecode" , &H5Sdecode , "Decode a binary object description of data space and return a new object handle. ") ;
 ////	function("H5Sencode" , &H5Sencode , "Encode a data space object description into a binary buffer. ") ;
 	function("H5Sextent_equal" , &H5Sextent_equal , "Determines whether two dataspace extents are equal. ") ;
@@ -18,7 +17,7 @@ RCPP_MODULE(H5S){
 ////	function("H5Sget_select_hyper_nblocks" , &H5Sget_select_hyper_nblocks , "Get number of hyperslab blocks. ") ;
 ////	function("H5Sget_select_npoints" , &H5Sget_select_npoints , "Determines the number of elements in a dataspace selection. ") ;
 ///	function("H5Sget_select_type" , &H5Sget_select_type , "Determines the type of the dataspace selection. ") ;
-///	function("H5Sget_simple_extent_dims" , &H5Sget_simple_extent_dims , "Retrieves dataspace dimension size and maximum size. ") ;
+////	function("H5Sget_simple_extent_dims" , &H5Sget_simple_extent_dims , "Retrieves dataspace dimension size and maximum size. ") ; ////hsize_t*
 	function("H4Sget_simple_extent_ndims" , &H5Sget_simple_extent_ndims , "Determines the dimensionality of a dataspace. ") ;
 ////	function("H5Sget_simple_extent_npoints" , &H5Sget_simple_extent_npoints , "Determines the number of elements in a dataspace. ") ;
 ///	function("H5Sget_simple_extent_type" , &H5Sget_simple_extent_type , "Determines the current class of a dataspace. ") ;
