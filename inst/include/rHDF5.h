@@ -5,6 +5,6 @@
 
 #include <Rcpp.h>
 
-#include <hdf5.h>
+#include <H5Cpp.h>
 
 #endif

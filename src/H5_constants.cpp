@@ -1,7 +1,17 @@
-#include <rHDF5.h>
+#include <H5Cpp.h>
+#include <H5public.h>
+#include <H5Dpublic.h>
 #include <rHDF5_hsize_t.h>
+#include <rHDF5_hssize_t.h>
+#include <rHDF5_H5F_close_degree_t.h>
+#include <rHDF5_H5FD_mem_t.h>
+#include <rHDF5_H5F_scope_t.h>
+#include <rHDF5_H5G_obj_t.h>
+#include <rHDF5_H5R_type_t.h>
 
-using namespace Rcpp;
+#include <Rcpp.h>
+using namespace H5;
+using namespace Rcpp ;
 class H5constants{
 public:
 	hid_t get_H5_VERS_MAJOR(){
