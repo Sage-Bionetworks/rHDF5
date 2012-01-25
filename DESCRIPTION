@@ -1,12 +1,13 @@
 Package: rHDF5
+Name: rHDF5
 Type: Package
-Title: What the package does (short line)
-Version: 1.0
+Title: HDF5 File access
+Version: 0.1-1
 Date: 2012-01-10
-Author: Who wrote it
-Maintainer: Who to complain to <yourfault@somewhere.net>
-Description: More about what it does (maybe more than one line)
-License: What Licence is it under ?
+Author: Matthew D. Furia <matt.furia@sagebase.org>
+Maintainer: Matthew D. Furia <matt.furia@sagebase.org>
+Description: Provides access to the C++ API of the hdf library. Built using Rcpp.
+License: GPL-2
 Depends: methods, Rcpp (>= 0.9.9)
 LinkingTo: Rcpp
-RcppModules: h5file, h5library, h5dataset, fileaccproplist, filecreatproplist   
+RcppModules: H5constants, h5file, h5library, h5dataset, fileaccproplist, filecreatproplist   

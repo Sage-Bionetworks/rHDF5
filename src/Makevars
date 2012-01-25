@@ -25,7 +25,7 @@ PKG_LIBS = `$(R_HOME)/bin/Rscript -e "Rcpp:::LdFlags()"` ./hdf5/hdf5/lib/libhdf5
 ## done by a number of packages, but recommended only for more advanced users
 ## comfortable with autoconf and its related tools.
 
-all: mylibs $(SHLIB)
+all:  $(SHLIB)
 
 mylibs:
 	cd szip; ./configure --disable-shared; make install
