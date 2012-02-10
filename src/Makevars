@@ -1,5 +1,5 @@
 ## Use the R_HOME indirection to support installations of multiple R version
-PKG_CXXFLAGS = -I./hdf5/hdf5/include -I./szip/szip/include -I../inst/include -O3 -w -c -fmessage-length=0 
+PKG_CXXFLAGS = -I./hdf5/hdf5/include -I./szip/szip/include -I../inst/include -O3 -w -c -fmessage-length=0 -fPIC 
 PKG_LIBS = `$(R_HOME)/bin/Rscript -e "Rcpp:::LdFlags()"` ./hdf5/hdf5/lib/libhdf5_cpp.a ./hdf5/hdf5/lib/libhdf5_hl_cpp.a ./hdf5/hdf5/lib/libhdf5.a ./hdf5/hdf5/lib/libhdf5_hl.a ./szip/szip/lib/libsz.a -lz -lstdc++
 
 ## As an alternative, one can also add this code in a file 'configure'
@@ -28,5 +28,5 @@ PKG_LIBS = `$(R_HOME)/bin/Rscript -e "Rcpp:::LdFlags()"` ./hdf5/hdf5/lib/libhdf5
 all: mylibs  $(SHLIB)
 
 mylibs:
-	cd szip; make clean; ./configure --enable-shared ; make install
-	cd hdf5; make clean; ./configure --enable-shared --with-pic --enable-cxx; make install
+	cd szip; make clean; ./configure --disable-shared ; make install
+	cd hdf5; make clean; ./configure --disable-shared --with-pic --enable-cxx; make install

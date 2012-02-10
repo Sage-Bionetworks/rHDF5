@@ -172,7 +172,7 @@ CC_VERSION = /usr/bin/gcc
 CFLAGS = 
 CLEARFILEBUF = yes
 CODESTACK = no
-CONFIG_DATE = Thu Feb  9 16:05:44 PST 2012
+CONFIG_DATE = Thu Feb  9 17:03:03 PST 2012
 CONFIG_MODE = production
 CONFIG_USER = root@ben-w520
 CPP = gcc -E
@@ -218,7 +218,7 @@ GREP = /bin/grep
 H5_CFLAGS = -std=c99 -pedantic -Wall -Wextra -Wundef -Wshadow -Wpointer-arith -Wbad-function-cast -Wcast-qual -Wcast-align -Wwrite-strings -Wconversion -Waggregate-return -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wnested-externs -Winline -Wno-long-long -Wfloat-equal -Wmissing-format-attribute -Wmissing-noreturn -Wpacked -Wdisabled-optimization -Wformat=2 -Wendif-labels -Wdeclaration-after-statement -Wold-style-definition -Winvalid-pch -Wvariadic-macros -Wnonnull -Winit-self -Wmissing-include-dirs -Wswitch-default -Wswitch-enum -Wunused-macros -Wunsafe-loop-optimizations -Wc++-compat -Wstrict-overflow -Wlogical-op -Wlarger-than=2048 -Wvla -Wsync-nand -Wframe-larger-than=16384 -Wpacked-bitfield-compat -Wstrict-aliasing -Wstrict-overflow=5 -Wjump-misses-init -Wunsuffixed-float-constants -Wdouble-promotion -Wsuggest-attribute=const -Wtrampolines -O3 -fomit-frame-pointer -finline-functions
 H5_CPPFLAGS = -D_POSIX_C_SOURCE=199506L   -DNDEBUG -UH5_DEBUG_API
 H5_CXXFLAGS =  
-H5_CXX_SHARED = yes
+H5_CXX_SHARED = no
 H5_FCFLAGS =  
 H5_FORTRAN_SHARED = no
 H5_LDFLAGS = 
@@ -337,7 +337,7 @@ datarootdir = ${prefix}/share
 # Install directories that automake doesn't know about
 docdir = $(exec_prefix)/doc
 dvidir = ${docdir}
-enable_shared = yes
+enable_shared = no
 enable_static = yes
 exec_prefix = ${prefix}
 host = x86_64-unknown-linux-gnu
