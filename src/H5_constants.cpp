@@ -8,7 +8,9 @@
 #include <rHDF5_H5F_scope_t.h>
 #include <rHDF5_H5G_obj_t.h>
 #include <rHDF5_H5R_type_t.h>
-#include <rHDF5_FileCreatPropList.h>
+#include <rHDF5_FileAccPropList.h>
+//#include <rHDF5_FileCreatePropList.h>
+#include <H5Classes.h>
 #include <Rcpp.h>
 
 using namespace H5;

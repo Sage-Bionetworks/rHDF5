@@ -32,10 +32,12 @@ namespace Rcpp{
 
 	template <> SEXP wrap( const H5R_type_t& ) ;
         template <> H5R_type_t as( SEXP ) ;
-	
-	template <> SEXP wrap( const FileCreatPropList& ) ;
-//	template <> FileCreatPropList as( SEXP ) ;
 
+        template <> SEXP wrap( const FileAccPropList& );
+        template <> FileAccPropList as( SEXP );
+
+//      template <> SEXP wrap( const FileCreatPropList& ) ;
+//      template <> FileCreatPropList as( SEXP ) ;
 }
 
 #endif
