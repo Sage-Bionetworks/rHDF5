@@ -2,9 +2,9 @@
 #define RHDF5_H
 
 #include <rHDF5Forward.h>
-
 #include <Rcpp.h>
 
-#include <H5Cpp.h>
+// MUST include these declarations after Rcpp.
+#include <rHDF5_FileAccPropList.h>
 
 #endif

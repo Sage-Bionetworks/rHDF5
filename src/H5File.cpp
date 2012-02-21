@@ -32,7 +32,7 @@ RCPP_MODULE(h5file){
 
 	.constructor()
 	
-//	.method( "openFile", &H5File::openFile )
+//	.method( "openFile", &H5File::openFile )  
 	.method( "close", &H5File::close )
 	.method( "flush", &H5File::flush )
 //	.method( "getAccessPlist", &H5File::getAccessPlist )

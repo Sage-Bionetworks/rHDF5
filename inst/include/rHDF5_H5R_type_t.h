@@ -6,8 +6,8 @@
 namespace Rcpp{
         template <>
         SEXP wrap( const H5R_type_t& mb ) {
-                int& foo = (int&)mb ;
-                return wrap(foo) ;
+//                int& foo = (int&)mb ;
+                return wrap( (int) mb) ;
         }
 
         template <>
